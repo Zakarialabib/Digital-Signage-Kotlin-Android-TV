@@ -72,6 +72,14 @@ interface ContentRepository {
     suspend fun deleteMediaItemsFromCache(items: List<MediaItemEntity>, cacheDir: File)
 }
 
+// TODO: Define these data classes or import them if they exist elsewhere
+data class Playlist(val id: String, val items: List<Content>, val duration: Int)
+sealed class Content {
+    data class Image(val id: String, val url: String, val duration: Int) : Content()
+    data class Video(val id: String, val url: String, val duration: Int) : Content()
+    data class Web(val id: String, val url: String, val duration: Int) : Content()
+}
+
 @Singleton
 class ContentRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
