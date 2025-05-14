@@ -98,10 +98,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
-    implementation("com.google.firebase:firebase-crashlytics-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
 
     // Testing
     testImplementation("junit:junit:4.13.2")
