@@ -120,13 +120,18 @@ class ContentRepositoryImpl @Inject constructor(
     
     override suspend fun getCachedLayoutWithMediaItems(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
         try {
-            val layout = layoutDao.getLayoutWithMediaItems(layoutId)
+            val layoutIdL = layoutId.toLongOrNull()
+                ?: return@withContext Result.Error(IllegalArgumentException("Invalid layout ID format: $layoutId"))
+
+            val layoutFlow: Flow<LayoutWithMediaItems?> = layoutDao.getLayoutWithMediaItems(layoutIdL)
+            val layout: LayoutWithMediaItems? = layoutFlow.firstOrNull()
+            
             if (layout != null) {
-                Logger.d("ContentRepository: Retrieved cached layout $layoutId with ${layout.mediaItems.size} media items")
+                Logger.d("ContentRepository: Retrieved cached layout $layoutIdL with ${layout.mediaItems.size} media items")
                 return@withContext Result.Success(layout)
             } else {
-                Logger.w("ContentRepository: No cached layout found for ID $layoutId")
-                return@withContext Result.Error(Exception("Layout not found in cache"))
+                Logger.w("ContentRepository: No cached layout found for ID $layoutIdL")
+                return@withContext Result.Error(Exception("Layout $layoutIdL not found in cache"))
             }
         } catch (e: Exception) {
             Logger.e(e, "ContentRepository: Error retrieving cached layout $layoutId")
@@ -143,7 +148,7 @@ class ContentRepositoryImpl @Inject constructor(
             if (cachedResult is Result.Success && !forceRefresh) {
                 val cachedLayout = cachedResult.data
                 val now = Date()
-                val layoutAge = (now.time - (cachedLayout.layout.lastUpdated?.time ?: 0)) / (60 * 1000)
+                val layoutAge = (now.time - cachedLayout.layout.lastSyncTimestamp) / (60 * 1000L)
                 
                 if (layoutAge < maxAgeMinutes) {
                     Logger.d("ContentRepository: Using cached layout, age: $layoutAge minutes")
@@ -169,9 +174,15 @@ class ContentRepositoryImpl @Inject constructor(
     
     override suspend fun cleanupUnusedMedia(currentLayoutId: String?) {
         try {
-            val keepMediaItemIds = if (currentLayoutId != null) {
-                val layout = layoutDao.getLayoutWithMediaItems(currentLayoutId)
-                layout?.mediaItems?.map { it.id } ?: emptyList()
+            val keepMediaItemIds: List<Long> = if (currentLayoutId != null) {
+                val layoutIdL = currentLayoutId.toLongOrNull()
+                if (layoutIdL == null) {
+                    Logger.w("ContentRepository: Invalid currentLayoutId format $currentLayoutId for cleanupUnusedMedia, keeping nothing based on ID.")
+                    emptyList()
+                } else {
+                    val layoutWithMediaItems = layoutDao.getLayoutWithMediaItems(layoutIdL).firstOrNull()
+                    layoutWithMediaItems?.mediaItems?.map { it.id } ?: emptyList()
+                }
             } else {
                 emptyList()
             }
