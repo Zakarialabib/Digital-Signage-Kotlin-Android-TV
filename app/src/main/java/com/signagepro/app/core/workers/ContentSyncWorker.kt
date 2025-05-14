@@ -8,6 +8,7 @@ import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.repository.ContentRepository
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
+import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull

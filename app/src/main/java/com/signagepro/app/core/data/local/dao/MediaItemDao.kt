@@ -18,7 +18,11 @@ interface MediaItemDao {
     @Delete
     suspend fun delete(mediaItem: MediaItemEntity)
 
-    @Query(
+    @Query("SELECT * FROM media_items WHERE id = :id")
+    suspend fun getById(id: Long): MediaItemEntity?
+
+    @Query("SELECT * FROM media_items WHERE id = :mediaItemId")
+    fun getMediaItemById(mediaItemId: Long): Flow<MediaItemEntity?>
 
     @Query("SELECT * FROM media_items WHERE id IN (:ids)")
     suspend fun getMediaItemsByIds(ids: List<Long>): List<MediaItemEntity>
@@ -62,9 +66,6 @@ interface MediaItemDao {
     """)
     suspend fun deleteMediaItemsNotInLayout(layoutId: String)
 
-    /**
-     * Delete all media items
-     */
     @Query("DELETE FROM media_items")
     suspend fun deleteAll()
 
