@@ -11,6 +11,7 @@ import com.signagepro.app.core.utils.Result
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
+import androidx.work.ListenableWorker
 
 @HiltWorker
 class ContentSyncWorker @AssistedInject constructor(
@@ -25,43 +26,50 @@ class ContentSyncWorker @AssistedInject constructor(
         const val WORK_NAME = "ContentSyncWorker"
     }
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): ListenableWorker.Result {
         Logger.i("ContentSyncWorker: Starting work.")
         try {
             val settings = deviceSettingsDao.getDeviceSettingsSnapshot()
             if (settings == null || !settings.isRegistered || settings.deviceId.isNullOrBlank()) {
                 Logger.w("ContentSyncWorker: Device not registered or no device ID. Skipping content sync.")
-                return Result.success() // Not an error, just can't sync yet
+                return ListenableWorker.Result.success() // Use WorkManager's Result
             }
 
-            // Fetch and cache the latest layout. The repository handles DB storage.
-            val fetchResult = contentRepository.fetchAndCacheLayout(settings.deviceId!!, settings.currentLayoutId).firstOrNull()
+            val layoutIdToSync = settings.currentLayoutId?.toString()
+            if (layoutIdToSync == null) {
+                Logger.i("ContentSyncWorker: No current layout ID assigned. Nothing to sync.")
+                return ListenableWorker.Result.success()
+            }
 
-            return when (fetchResult) {
+            Logger.i("ContentSyncWorker: Syncing layout ID: $layoutIdToSync")
+            // Fetch and cache the latest layout. The repository handles DB storage.
+            // fetchAndCacheLayout returns com.signagepro.app.core.utils.Result<LayoutWithMediaItems>
+            val fetchOutcome: com.signagepro.app.core.utils.Result<LayoutWithMediaItems> = 
+                contentRepository.fetchAndCacheLayout(layoutIdToSync)
+
+            return when (fetchOutcome) {
                 is com.signagepro.app.core.utils.Result.Success -> {
-                    Logger.i("ContentSyncWorker: Content sync successful.")
-                    // TODO: Optionally trigger pre-downloading of new/updated media items from the layout
-                    // This would involve getting the LayoutWithMediaItems, iterating, and using a downloader.
+                    Logger.i("ContentSyncWorker: Content sync successful for layout $layoutIdToSync.")
                     deviceSettingsDao.updateLastSuccessfulSyncTimestamp(System.currentTimeMillis())
-                    Result.success()
+                    ListenableWorker.Result.success() // Use WorkManager's Result
                 }
                 is com.signagepro.app.core.utils.Result.Error -> {
-                    Logger.e(fetchResult.exception, "ContentSyncWorker: Content sync failed.")
-                    Result.retry()
+                    Logger.e(fetchOutcome.exception, "ContentSyncWorker: Content sync failed for layout $layoutIdToSync.")
+                    ListenableWorker.Result.retry() // Use WorkManager's Result
                 }
                 is com.signagepro.app.core.utils.Result.Loading -> {
-                    // Should not happen with firstOrNull(), but handle defensively
-                    Logger.w("ContentSyncWorker: Still loading, will retry.")
-                    Result.retry()
+                    // This case should ideally not be returned directly by fetchAndCacheLayout
+                    // if it's a suspend function that completes an operation.
+                    // If it can, then retry is appropriate.
+                    Logger.w("ContentSyncWorker: fetchAndCacheLayout returned Loading. Retrying for $layoutIdToSync.")
+                    ListenableWorker.Result.retry()
                 }
-                null -> {
-                    Logger.e("ContentSyncWorker: Fetch result was null. Unknown error.")
-                    Result.retry()
-                }
+                // No 'null' case as fetchOutcome is not nullable.
+                // The 'when' is exhaustive for the sealed class com.signagepro.app.core.utils.Result.
             }
         } catch (e: Exception) {
             Logger.e(e, "ContentSyncWorker: Exception during content sync.")
-            return Result.retry()
+            return ListenableWorker.Result.retry() // Use WorkManager's Result
         }
     }
 }

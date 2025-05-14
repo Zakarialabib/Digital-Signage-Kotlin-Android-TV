@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" // Added for Kotlinx Serialization
+    id("org.jetbrains.kotlin.plugin.parcelize") // Added for Parcelize
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp") // For KSP-based annotation processing
     id("com.google.gms.google-services") // For Firebase
