@@ -3,18 +3,18 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
-    id("com.google.gms.google-services") // For Firebase
-    id("com.google.firebase.crashlytics")
+    // id("com.google.gms.google-services") // For Firebase
+    // id("com.google.firebase.crashlytics")
 }
 
 android {
     namespace = "com.signagepro.app"
-    compileSdk = 34
+    compileSdk = 35
     
     defaultConfig {
         applicationId = "com.signagepro.app"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
