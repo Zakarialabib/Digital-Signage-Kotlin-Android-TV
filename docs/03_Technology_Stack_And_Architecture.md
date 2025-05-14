@@ -219,7 +219,7 @@ The app will follow the **Model-View-ViewModel (MVVM)** architectural pattern, p
 ## Proposed Directory Structure (within `app/src/main/java/com/yourcompany/digitalsignage/`)
 
 ```
-com.SignagePro.app/
+com.signagepro.app/
 ├── SignageProApplication.kt     // Main Application class (Hilt setup)
 ├── MainActivity.kt                  // Single Activity hosting Composables
 │

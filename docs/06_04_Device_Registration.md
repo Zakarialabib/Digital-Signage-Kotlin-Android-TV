@@ -8,7 +8,7 @@ We'll use the ZXing library (core) to generate the QR code bitmap.
 
 **`features/registration/utils/QrCodeGenerator.kt`:**
 ```kotlin
-package com.SignagePro.app.features.registration.utils
+package com.signagepro.app.features.registration.utils
 
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -55,14 +55,14 @@ The `RegistrationViewModel` manages the state and logic for the registration scr
 
 **`features/registration/viewmodel/RegistrationViewModel.kt`:**
 ```kotlin
-package com.SignagePro.app.features.registration.viewmodel
+package com.signagepro.app.features.registration.viewmodel
 
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.SignagePro.app.core.data.repository.DeviceRepository
-import com.SignagePro.app.core.data.repository.Resource
-import com.SignagePro.app.features.registration.utils.QrCodeGenerator
+import com.signagepro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.data.repository.Resource
+import com.signagepro.app.features.registration.utils.QrCodeGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -181,7 +181,7 @@ class RegistrationViewModel @Inject constructor(
 
 **`features/registration/ui/RegistrationScreen.kt`:**
 ```kotlin
-package com.SignagePro.app.features.registration.ui
+package com.signagepro.app.features.registration.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -197,11 +197,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.SignagePro.app.R // For string resources
-import com.SignagePro.app.features.registration.viewmodel.RegistrationScreenState
-import com.SignagePro.app.features.registration.viewmodel.RegistrationViewModel
-import com.SignagePro.app.ui.components.LoadingIndicator // Generic loading
-import com.SignagePro.app.ui.theme.SignageProTVTypography // Assuming custom TV Typography
+import com.signagepro.app.R // For string resources
+import com.signagepro.app.features.registration.viewmodel.RegistrationScreenState
+import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
+import com.signagepro.app.ui.components.LoadingIndicator // Generic loading
+import com.signagepro.app.ui.theme.SignageProTVTypography // Assuming custom TV Typography
 
 @Composable
 fun RegistrationScreen(

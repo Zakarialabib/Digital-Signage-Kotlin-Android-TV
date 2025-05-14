@@ -10,13 +10,13 @@ Repositories are the SPoT (Single Point of Truth) for data access. They abstract
 
 **`core/data/repository/DeviceRepository.kt` (Example)**
 ```kotlin
-package com.SignagePro.app.core.data.repository
+package com.signagepro.app.core.data.repository
 
-import com.SignagePro.app.core.data.local.SharedPreferencesManager
-import com.SignagePro.app.core.network.ApiService
-import com.SignagePro.app.core.network.dtos.*
-import com.SignagePro.app.core.util.CoroutineDispatchers
-import com.SignagePro.app.core.util.Resource // A generic class for wrapping responses
+import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.network.ApiService
+import com.signagepro.app.core.network.dtos.*
+import com.signagepro.app.core.util.CoroutineDispatchers
+import com.signagepro.app.core.util.Resource // A generic class for wrapping responses
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -130,7 +130,7 @@ For storing simple key-value pairs like auth token, device ID, current layout ID
 
 **`core/data/local/SharedPreferencesManager.kt`**
 ```kotlin
-package com.SignagePro.app.core.data.local
+package com.signagepro.app.core.data.local
 
 import android.content.SharedPreferences
 import javax.inject.Inject
@@ -212,7 +212,7 @@ Room provides an abstraction layer over SQLite for robust database access. It wi
 Define data classes annotated with `@Entity`.
 *Example: `CachedMediaItem.kt`*
 ```kotlin
-package com.SignagePro.app.core.data.local.model // or .database.entity
+package com.signagepro.app.core.data.local.model // or .database.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -234,10 +234,10 @@ data class CachedMediaItem(
 Define an interface annotated with `@Dao` containing methods for database operations.
 *Example: `CachedMediaDao.kt`*
 ```kotlin
-package com.SignagePro.app.core.data.local.database.dao
+package com.signagepro.app.core.data.local.database.dao
 
 import androidx.room.*
-import com.SignagePro.app.core.data.local.model.CachedMediaItem // or .entity
+import com.signagepro.app.core.data.local.model.CachedMediaItem // or .entity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -268,12 +268,12 @@ interface CachedMediaDao {
 **C. Database Class (`core/data/local/database/AppDatabase.kt`):**
 Abstract class annotated with `@Database`.
 ```kotlin
-package com.SignagePro.app.core.data.local.database
+package com.signagepro.app.core.data.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.SignagePro.app.core.data.local.database.dao.CachedMediaDao
-import com.SignagePro.app.core.data.local.model.CachedMediaItem // or .entity
+import com.signagepro.app.core.data.local.database.dao.CachedMediaDao
+import com.signagepro.app.core.data.local.model.CachedMediaItem // or .entity
 
 @Database(entities = [CachedMediaItem::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -284,12 +284,12 @@ abstract class AppDatabase : RoomDatabase() {
 
 **D. Hilt Module for Database (`core/di/DatabaseModule.kt`):**
 ```kotlin
-package com.SignagePro.app.core.di
+package com.signagepro.app.core.di
 
 import android.content.Context
 import androidx.room.Room
-import com.SignagePro.app.core.data.local.database.AppDatabase
-import com.SignagePro.app.core.data.local.database.dao.CachedMediaDao
+import com.signagepro.app.core.data.local.database.AppDatabase
+import com.signagepro.app.core.data.local.database.dao.CachedMediaDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -333,9 +333,9 @@ Mocking is essential for developing UI and logic without a live backend or for s
 
 **`core/network/FakeApiService.kt` (Example - place in `src/debug/java/...` for build variant specific mock or test sources)**
 ```kotlin
-package com.SignagePro.app.core.network // Path in debug source set
+package com.signagepro.app.core.network // Path in debug source set
 
-import com.SignagePro.app.core.network.dtos.*
+import com.signagepro.app.core.network.dtos.*
 import kotlinx.coroutines.delay
 import retrofit2.Response
 import java.util.*
@@ -448,10 +448,10 @@ class FakeApiService : ApiService {
 *   **Hilt Module for Mocking (in `src/debug/java/...` or test source set):**
     ```kotlin
     // core/di/DebugNetworkModule.kt (in src/debug/java/...)
-    package com.SignagePro.app.core.di
+    package com.signagepro.app.core.di
 
-    import com.SignagePro.app.core.network.ApiService
-    import com.SignagePro.app.core.network.FakeApiService // From debug source set
+    import com.signagepro.app.core.network.ApiService
+    import com.signagepro.app.core.network.FakeApiService // From debug source set
     import dagger.Module
     import dagger.Provides
     import dagger.hilt.InstallIn

@@ -8,7 +8,7 @@ Define a consistent theme for the application.
 
 **A. `ui/theme/Color.kt`:**
 ```kotlin
-package com.SignagePro.app.ui.theme
+package com.signagepro.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
@@ -42,7 +42,7 @@ val md_theme_dark_primaryContainer = Color(0xFF00497D)
 **B. `ui/theme/Typography.kt`:**
 Define typography styles suitable for TV (larger, legible fonts).
 ```kotlin
-package com.SignagePro.app.ui.theme
+package com.signagepro.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
@@ -95,7 +95,7 @@ val SignageProTVTypography = Typography(
 
 **C. `ui/theme/Theme.kt`:**
 ```kotlin
-package com.SignagePro.app.ui.theme
+package com.signagepro.app.ui.theme
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -211,7 +211,7 @@ This Enum can be used for categorizing layouts or devices on the backend and pot
 
 **`core/model/TemplateCategory.kt` (or similar path):**
 ```kotlin
-package com.SignagePro.app.core.model // Or a more specific feature package if only used there
+package com.signagepro.app.core.model // Or a more specific feature package if only used there
 
 // Assuming you might want to use Material Icons if you display these in a debug UI
 // import androidx.compose.material.icons.Icons

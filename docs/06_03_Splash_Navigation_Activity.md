@@ -10,7 +10,7 @@ A splash screen provides an initial branding experience while the app loads.
 A simple Composable for the splash screen.
 
 ```kotlin
-package com.SignagePro.app.features.splash.ui
+package com.signagepro.app.features.splash.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.SignagePro.app.R // Assuming you have a logo in drawables
+import com.signagepro.app.R // Assuming you have a logo in drawables
 import kotlinx.coroutines.delay
 
 @Composable
@@ -72,11 +72,11 @@ fun SplashScreen(
 This ViewModel will handle logic like checking initial registration status.
 
 ```kotlin
-package com.SignagePro.app.features.splash.viewmodel
+package com.signagepro.app.features.splash.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.SignagePro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.data.repository.DeviceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -121,7 +121,7 @@ Ensure `androidx.hilt:hilt-navigation-compose` and `androidx.navigation:navigati
 
 **B. Define Navigation Routes (`ui/navigation/NavRoutes.kt`):**
 ```kotlin
-package com.SignagePro.app.ui.navigation
+package com.signagepro.app.ui.navigation
 
 object NavRoutes {
     const val SPLASH = "splash"
@@ -133,7 +133,7 @@ object NavRoutes {
 
 **C. Create Navigation Graph (`ui/navigation/AppNavigation.kt`):**
 ```kotlin
-package com.SignagePro.app.ui.navigation
+package com.signagepro.app.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -145,14 +145,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.SignagePro.app.core.util.HardwareInfoProvider // To be created
-import com.SignagePro.app.features.display.ui.DisplayScreen
-import com.SignagePro.app.features.display.viewmodel.DisplayViewModel
-import com.SignagePro.app.features.registration.ui.RegistrationScreen
-import com.SignagePro.app.features.registration.viewmodel.RegistrationViewModel
-import com.SignagePro.app.features.splash.ui.SplashScreen
-import com.SignagePro.app.features.splash.viewmodel.SplashDestination
-import com.SignagePro.app.features.splash.viewmodel.SplashViewModel
+import com.signagepro.app.core.util.HardwareInfoProvider // To be created
+import com.signagepro.app.features.display.ui.DisplayScreen
+import com.signagepro.app.features.display.viewmodel.DisplayViewModel
+import com.signagepro.app.features.registration.ui.RegistrationScreen
+import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
+import com.signagepro.app.features.splash.ui.SplashScreen
+import com.signagepro.app.features.splash.viewmodel.SplashDestination
+import com.signagepro.app.features.splash.viewmodel.SplashViewModel
 
 @Composable
 fun AppNavigation(
@@ -217,12 +217,12 @@ fun AppNavigation(
 ```
 *   **`core/util/HardwareInfoProvider.kt` (Simplified example, inject context if needed for Android ID):**
     ```kotlin
-    package com.SignagePro.app.core.util
+    package com.signagepro.app.core.util
 
     import android.annotation.SuppressLint
     import android.content.Context
     import android.provider.Settings
-    import com.SignagePro.app.core.data.local.SharedPreferencesManager
+    import com.signagepro.app.core.data.local.SharedPreferencesManager
     import dagger.hilt.android.qualifiers.ApplicationContext
     import java.util.UUID
     import javax.inject.Inject
@@ -268,7 +268,7 @@ The `MainActivity` is the entry point and hosts the `AppNavigation` Composable.
 
 **`MainActivity.kt` (updated from `02_Getting_Started.md`):**
 ```kotlin
-package com.SignagePro.app
+package com.signagepro.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -280,9 +280,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.SignagePro.app.core.util.HardwareInfoProvider // Make sure it's injectable
-import com.SignagePro.app.ui.navigation.AppNavigation
-import com.SignagePro.app.ui.theme.SignageProTVTheme // Ensure you have this theme
+import com.signagepro.app.core.util.HardwareInfoProvider // Make sure it's injectable
+import com.signagepro.app.ui.navigation.AppNavigation
+import com.signagepro.app.ui.theme.SignageProTVTheme // Ensure you have this theme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 

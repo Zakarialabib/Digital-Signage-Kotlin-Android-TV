@@ -8,12 +8,12 @@ To ensure the app launches automatically when the Android TV device starts.
 
 **`background/BootReceiver.kt`:**
 ```kotlin
-package com.SignagePro.app.background
+package com.signagepro.app.background
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.SignagePro.app.MainActivity
+import com.signagepro.app.MainActivity
 import timber.log.Timber
 
 class BootReceiver : BroadcastReceiver() {
@@ -60,16 +60,16 @@ A periodic `WorkManager` task is ideal for sending heartbeats reliably.
 
 **A. `core/workers/HeartbeatWorker.kt`:**
 ```kotlin
-package com.SignagePro.app.core.workers
+package com.signagepro.app.core.workers
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.SignagePro.app.core.data.repository.DeviceRepository
-import com.SignagePro.app.core.data.local.SharedPreferencesManager
-import com.SignagePro.app.core.network.dtos.HeartbeatRequestDto
-import com.SignagePro.app.core.util.HardwareInfoProvider
+import com.signagepro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.network.dtos.HeartbeatRequestDto
+import com.signagepro.app.core.util.HardwareInfoProvider
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
@@ -117,7 +117,7 @@ class HeartbeatWorker @AssistedInject constructor(
         )
 
         return when (val resource = deviceRepository.sendHeartbeat(heartbeatDto)) {
-            is com.SignagePro.app.core.data.repository.Resource.Success -> {
+            is com.signagepro.app.core.data.repository.Resource.Success -> {
                 Timber.i("Heartbeat successful. Next action: ${resource.data?.nextAction}")
                 resource.data?.let { response ->
                     // Handle backend commands from heartbeat response
@@ -139,7 +139,7 @@ class HeartbeatWorker @AssistedInject constructor(
                 }
                 Result.success()
             }
-            is com.SignagePro.app.core.data.repository.Resource.Error -> {
+            is com.signagepro.app.core.data.repository.Resource.Error -> {
                 Timber.e("Heartbeat failed: ${resource.message}")
                 Result.retry() // WorkManager will retry with backoff
             }
@@ -201,12 +201,12 @@ Ensure `google-services.json` is in place and FCM dependencies are added.
 
 **B. `background/FcmService.kt`:**
 ```kotlin
-package com.SignagePro.app.background
+package com.signagepro.app.background
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.SignagePro.app.core.data.local.SharedPreferencesManager
-import com.SignagePro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.data.repository.DeviceRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -236,7 +236,7 @@ class FcmService : FirebaseMessagingService() {
             scope.launch {
                 try {
                     // Use a DTO for the request body
-                    val requestDto = com.SignagePro.app.core.network.dtos.FcmTokenRequestDto(fcmToken = token)
+                    val requestDto = com.signagepro.app.core.network.dtos.FcmTokenRequestDto(fcmToken = token)
                     val response = deviceRepository.apiService.registerFcmToken(requestDto) // Assuming direct API call or repo method
                     if (response.isSuccessful) {
                         Timber.i("FCM token registered with server successfully.")

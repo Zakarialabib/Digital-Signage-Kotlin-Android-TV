@@ -113,7 +113,7 @@ Common helper functions can be placed in `core/utils/`.
 
 **A. `core/utils/Constants.kt`:**
 ```kotlin
-package com.SignagePro.app.core.utils
+package com.signagepro.app.core.utils
 
 object Constants {
     const val SHARED_PREFS_NAME = "SignageProPrefs"
@@ -125,9 +125,9 @@ object Constants {
 
 **B. `core/utils/Logger.kt` (Example using Timber, if integrated):**
 ```kotlin
-package com.SignagePro.app.core.utils
+package com.signagepro.app.core.utils
 
-import com.SignagePro.app.BuildConfig
+import com.signagepro.app.BuildConfig
 import timber.log.Timber
 
 object Logger {

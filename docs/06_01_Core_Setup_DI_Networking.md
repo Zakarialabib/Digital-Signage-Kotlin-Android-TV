@@ -15,7 +15,7 @@ Ensure Hilt plugins and dependencies are correctly added to your `build.gradle` 
 Annotate your `Application` class with `@HiltAndroidApp`.
 ```kotlin
 // com/yourcompany/digitalsignage/SignageProApplication.kt
-package com.SignagePro.app
+package com.signagepro.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
@@ -37,12 +37,12 @@ Create modules to tell Hilt how to provide instances of types that cannot be con
 
 **`core/di/AppModule.kt` (General App-wide Bindings):**
 ```kotlin
-package com.SignagePro.app.core.di
+package com.signagepro.app.core.di
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.work.WorkManager
-import com.SignagePro.app.core.util.CoroutineDispatchers
+import com.signagepro.app.core.util.CoroutineDispatchers
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -80,7 +80,7 @@ object AppModule {
 ```
 *   **`CoroutineDispatchers.kt` utility:**
     ```kotlin
-    package com.SignagePro.app.core.util
+    package com.signagepro.app.core.util
     import kotlinx.coroutines.CoroutineDispatcher
     data class CoroutineDispatchers(
         val io: CoroutineDispatcher,
@@ -98,13 +98,13 @@ Ensure Retrofit, OkHttp, GsonConverter, and LoggingInterceptor dependencies are 
 This module will provide instances of OkHttpClient, Retrofit, and your ApiService.
 
 ```kotlin
-package com.SignagePro.app.core.di
+package com.signagepro.app.core.di
 
 import com.google.gson.GsonBuilder
-import com.SignagePro.app.BuildConfig // Ensure BuildConfig is generated
-import com.SignagePro.app.core.data.local.SharedPreferencesManager
-import com.SignagePro.app.core.network.ApiService
-import com.SignagePro.app.core.network.AuthInterceptor
+import com.signagepro.app.BuildConfig // Ensure BuildConfig is generated
+import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.network.ApiService
+import com.signagepro.app.core.network.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -179,9 +179,9 @@ object NetworkModule {
 This interceptor will add the `Authorization` header with the Bearer token to relevant requests.
 
 ```kotlin
-package com.SignagePro.app.core.network
+package com.signagepro.app.core.network
 
-import com.SignagePro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.data.local.SharedPreferencesManager
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
@@ -215,9 +215,9 @@ class AuthInterceptor @Inject constructor(
 Define your API service methods here. Refer to `05_Backend_API_Contract.md`.
 
 ```kotlin
-package com.SignagePro.app.core.network
+package com.signagepro.app.core.network
 
-import com.SignagePro.app.core.network.dtos.* // Create DTO packages
+import com.signagepro.app.core.network.dtos.* // Create DTO packages
 import retrofit2.Response // Use Response<T> for more control over HTTP status
 import retrofit2.http.*
 
@@ -260,7 +260,7 @@ Create Kotlin data classes for all request and response bodies in `core/network/
 *Example DTO for `RegistrationRequestDto`*:
 ```kotlin
 // core/network/dtos/RegistrationDtos.kt
-package com.SignagePro.app.core.network.dtos
+package com.signagepro.app.core.network.dtos
 
 import com.google.gson.annotations.SerializedName
 
@@ -286,7 +286,7 @@ data class RegistrationStatusResponseDto(
 
 **`GenericApiResponseDto.kt` (for simple status responses):**
 ```kotlin
-package com.SignagePro.app.core.network.dtos
+package com.signagepro.app.core.network.dtos
 import com.google.gson.annotations.SerializedName
 
 data class GenericApiResponseDto(

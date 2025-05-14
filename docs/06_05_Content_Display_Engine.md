@@ -8,17 +8,17 @@ The `DisplayViewModel` is responsible for fetching the layout, managing the curr
 
 **`features/display/viewmodel/DisplayViewModel.kt`:**
 ```kotlin
-package com.SignagePro.app.features.display.viewmodel
+package com.signagepro.app.features.display.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.SignagePro.app.core.data.local.SharedPreferencesManager
-import com.SignagePro.app.core.data.repository.DeviceRepository // Assuming layout fetching is here
-import com.SignagePro.app.core.data.repository.Resource
-import com.SignagePro.app.core.network.dtos.LayoutResponseDto
-import com.SignagePro.app.features.display.manager.ContentCacheManager
-import com.SignagePro.app.features.display.manager.PlaylistManager
-import com.SignagePro.app.features.display.model.DisplayableItem // To be created
+import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.data.repository.DeviceRepository // Assuming layout fetching is here
+import com.signagepro.app.core.data.repository.Resource
+import com.signagepro.app.core.network.dtos.LayoutResponseDto
+import com.signagepro.app.features.display.manager.ContentCacheManager
+import com.signagepro.app.features.display.manager.PlaylistManager
+import com.signagepro.app.features.display.model.DisplayableItem // To be created
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -141,9 +141,9 @@ class DisplayViewModel @Inject constructor(
 
 **`features/display/model/DisplayableItem.kt` (Data model for items handled by PlaylistManager):**
 ```kotlin
-package com.SignagePro.app.features.display.model
+package com.signagepro.app.features.display.model
 
-import com.SignagePro.app.core.network.dtos.LayoutItemDto // Your API DTO for an item
+import com.signagepro.app.core.network.dtos.LayoutItemDto // Your API DTO for an item
 
 // This class adapts the API DTO to a model that renderers and PlaylistManager can use.
 // It might include additional state, like local cached path.
@@ -198,12 +198,12 @@ Manages the sequence of content items, transitions, and pre-loading triggers.
 
 **`features/display/manager/PlaylistManager.kt`:**
 ```kotlin
-package com.SignagePro.app.features.display.manager
+package com.signagepro.app.features.display.manager
 
-import com.SignagePro.app.core.network.dtos.LayoutResponseDto
-import com.SignagePro.app.core.util.CoroutineDispatchers
-import com.SignagePro.app.features.display.model.DisplayableItem
-import com.SignagePro.app.features.display.model.toDisplayableItem
+import com.signagepro.app.core.network.dtos.LayoutResponseDto
+import com.signagepro.app.core.util.CoroutineDispatchers
+import com.signagepro.app.features.display.model.DisplayableItem
+import com.signagepro.app.features.display.model.toDisplayableItem
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -339,14 +339,14 @@ Handles downloading, storing, and retrieving media assets. Interacts with Room D
 
 **`features/display/manager/ContentCacheManager.kt`:**
 ```kotlin
-package com.SignagePro.app.features.display.manager
+package com.signagepro.app.features.display.manager
 
 import android.content.Context
-import com.SignagePro.app.core.data.local.database.dao.CachedMediaDao
-import com.SignagePro.app.core.data.local.model.CachedMediaItem
-import com.SignagePro.app.core.util.CoroutineDispatchers
-import com.SignagePro.app.features.display.model.CarouselImageItem
-import com.SignagePro.app.features.display.model.DisplayableItem
+import com.signagepro.app.core.data.local.database.dao.CachedMediaDao
+import com.signagepro.app.core.data.local.model.CachedMediaItem
+import com.signagepro.app.core.util.CoroutineDispatchers
+import com.signagepro.app.features.display.model.CarouselImageItem
+import com.signagepro.app.features.display.model.DisplayableItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -534,7 +534,7 @@ Composable functions responsible for displaying specific types of content.
 
 **`features/display/ui/DisplayScreen.kt` (Host for Renderers):**
 ```kotlin
-package com.SignagePro.app.features.display.ui
+package com.signagepro.app.features.display.ui
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
@@ -551,12 +551,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.SignagePro.app.core.util.NetworkConnectivityObserver // To be created
-import com.SignagePro.app.features.display.model.DisplayableItem
-import com.SignagePro.app.features.display.renderers.* // Import all renderers
-import com.SignagePro.app.features.display.viewmodel.DisplayViewModel
-import com.SignagePro.app.ui.components.LoadingIndicator
-import com.SignagePro.app.ui.theme.SignageProTVTypography
+import com.signagepro.app.core.util.NetworkConnectivityObserver // To be created
+import com.signagepro.app.features.display.model.DisplayableItem
+import com.signagepro.app.features.display.renderers.* // Import all renderers
+import com.signagepro.app.features.display.viewmodel.DisplayViewModel
+import com.signagepro.app.ui.components.LoadingIndicator
+import com.signagepro.app.ui.theme.SignageProTVTypography
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -732,7 +732,7 @@ private fun ErrorDisplay(message: String, onRetry: () -> Unit) {
 
 **A. `features/display/renderers/ImageRenderer.kt`:**
 ```kotlin
-package com.SignagePro.app.features.display.renderers
+package com.signagepro.app.features.display.renderers
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -748,7 +748,7 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.SignagePro.app.features.display.model.DisplayableItem
+import com.signagepro.app.features.display.model.DisplayableItem
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
@@ -817,7 +817,7 @@ fun ImageRenderer(
 
 **B. `features/display/renderers/VideoRenderer.kt` (Manages ExoPlayer):**
 ```kotlin
-package com.SignagePro.app.features.display.renderers
+package com.signagepro.app.features.display.renderers
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -833,7 +833,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.SignagePro.app.features.display.model.DisplayableItem
+import com.signagepro.app.features.display.model.DisplayableItem
 import timber.log.Timber
 
 @Composable
@@ -928,7 +928,7 @@ fun VideoRenderer(
 
 **C. `features/display/renderers/WebRenderer.kt` (Manages WebView):**
 ```kotlin
-package com.SignagePro.app.features.display.renderers
+package com.signagepro.app.features.display.renderers
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -943,7 +943,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
-import com.SignagePro.app.features.display.model.DisplayableItem
+import com.signagepro.app.features.display.model.DisplayableItem
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
@@ -1065,7 +1065,7 @@ fun WebRenderer(
 
 **D. `features/display/renderers/CarouselRenderer.kt`:**
 ```kotlin
-package com.SignagePro.app.features.display.renderers
+package com.signagepro.app.features.display.renderers
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
@@ -1081,8 +1081,8 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.SignagePro.app.features.display.model.CarouselImageItem
-import com.SignagePro.app.features.display.model.DisplayableItem
+import com.signagepro.app.features.display.model.CarouselImageItem
+import com.signagepro.app.features.display.model.DisplayableItem
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
@@ -1207,7 +1207,7 @@ private fun RenderCarouselImage(
 
 **`core/util/NetworkConnectivityObserver.kt`**
 ```kotlin
-package com.SignagePro.app.core.util
+package com.signagepro.app.core.util
 
 import android.content.Context
 import android.net.ConnectivityManager

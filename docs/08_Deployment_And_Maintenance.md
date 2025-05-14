@@ -62,9 +62,9 @@ This section outlines the process for building, releasing, and maintaining the A
         # ... (and other specific rules for libraries you use)
 
         # Keep your DTOs, Entities, and specific model classes
-        -keep class com.SignagePro.app.core.network.dtos.** { *; }
-        -keep class com.SignagePro.app.core.data.local.model.** { *; }
-        -keep class com.SignagePro.app.features.display.model.** { *; }
+        -keep class com.signagepro.app.core.network.dtos.** { *; }
+        -keep class com.signagepro.app.core.data.local.model.** { *; }
+        -keep class com.signagepro.app.features.display.model.** { *; }
 
         # If using enums with valueOf() or by name serialization
         -keepclassmembers enum * {

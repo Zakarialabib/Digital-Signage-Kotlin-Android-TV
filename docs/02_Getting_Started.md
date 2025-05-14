@@ -28,7 +28,7 @@ plugins {
 }
 
 android {
-    namespace = "com.SignagePro.app"
+    namespace = "com.signagepro.app"
     compileSdk = 34
     
     defaultConfig {
@@ -241,7 +241,7 @@ This guide will help you set up your development environment, build the initial 
     *   Under the "SDK Tools" tab, make sure `Android SDK Build-Tools`, `Android Emulator`, `Android SDK Platform-Tools`, and `Google Play services` are installed and up-to-date.
 3.  **Firebase Setup (if using):**
     *   Create a new project in the [Firebase Console](https://console.firebase.google.com/).
-    *   Add an Android app to your Firebase project, using `com.SignagePro.app` as the package name (or your chosen name).
+    *   Add an Android app to your Firebase project, using `com.signagepro.app` as the package name (or your chosen name).
     *   Download the `google-services.json` file and place it in the `app/` directory of your Android project.
 
 
@@ -359,7 +359,7 @@ hg
 
 **`SignageProApplication.kt`**
 ```kotlin
-package com.SignagePro.app
+package com.signagepro.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
@@ -384,7 +384,7 @@ class SignageProApplication : Application() {
 
 **`MainActivity.kt`**
 ```kotlin
-package com.SignagePro.app
+package com.signagepro.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -396,8 +396,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.SignagePro.app.ui.navigation.AppNavigation
-import com.SignagePro.app.ui.theme.SignageProTVTheme
+import com.signagepro.app.ui.navigation.AppNavigation
+import com.signagepro.app.ui.theme.SignageProTVTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
