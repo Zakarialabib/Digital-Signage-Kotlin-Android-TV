@@ -18,10 +18,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.signagepro.app.features.display.viewmodel.DisplayUiState
 import com.signagepro.app.features.display.viewmodel.DisplayViewModel
 import com.signagepro.app.core.data.model.Content
-// Import specific renderers once they are created
-// import com.signagepro.app.features.display.renderers.ImageRenderer
-// import com.signagepro.app.features.display.renderers.VideoRenderer
-// import com.signagepro.app.features.display.renderers.HtmlRenderer
+// Import specific renderers
+import com.signagepro.app.features.display.renderers.HtmlRenderer
+import com.signagepro.app.features.display.renderers.ImageRenderer
+import com.signagepro.app.features.display.renderers.VideoRenderer
+import com.signagepro.app.features.display.renderers.WebPageRenderer
 
 @Composable
 fun DisplayScreen(
@@ -51,8 +52,8 @@ fun DisplayScreen(
             }
             is DisplayUiState.Success -> {
                 // Render the current content
-                state.currentContent?.let {\ content ->
-                    RenderContent(content, viewModel)
+                state.currentContent?.let { content ->
+                    RenderContent(content = content, viewModel = viewModel, onFinished = { viewModel.onContentFinished() })
                 } ?: run {
                      Text("No content to display currently.", fontSize = 20.sp, color = Color.White)
                 }
@@ -90,26 +91,27 @@ fun DisplayScreen(
 }
 
 @Composable
-fun RenderContent(content: Content, viewModel: DisplayViewModel) {
+fun RenderContent(content: Content, viewModel: DisplayViewModel, onFinished: () -> Unit) {
     // This is where different content types will be rendered.
     // Each type will have its own Composable renderer function.
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (content) {
             is Content.Image -> {
-                // ImageRenderer(content, onFinished = { viewModel.onContentFinished() })
-                Text("Displaying Image: ${content.url}", color = Color.White, fontSize = 24.sp)
+                ImageRenderer(imageContent = content)
+                // For images, onFinished is typically handled by DisplayViewModel's timer
             }
             is Content.Video -> {
-                // VideoRenderer(content, onFinished = { viewModel.onContentFinished() })
-                Text("Displaying Video: ${content.url}", color = Color.White, fontSize = 24.sp)
+                VideoRenderer(videoContent = content, onFinished = onFinished)
             }
             is Content.Html -> {
-                // HtmlRenderer(content, onFinished = { viewModel.onContentFinished() })
-                Text("Displaying HTML content", color = Color.White, fontSize = 24.sp)
+                HtmlRenderer(htmlContent = content, onFinished = onFinished)
             }
             is Content.WebPage -> {
-                // WebPageRenderer(content, onFinished = { viewModel.onContentFinished() })
-                Text("Displaying Web Page: ${content.url}", color = Color.White, fontSize = 24.sp)
+                WebPageRenderer(webPageContent = content, onPageFinishedLoading = {
+                    // Optional: can log or perform action when page itself loads
+                    // Main content transition is handled by DisplayViewModel timer or onFinished
+                })
+                // For WebPage, onFinished is typically handled by DisplayViewModel's timer
             }
             // Carousel and Playlist might be handled differently, perhaps by the ViewModel 
             // or a dedicated renderer that internally manages their items.
@@ -125,8 +127,9 @@ fun RenderContent(content: Content, viewModel: DisplayViewModel) {
             }
         }
     }
-    // Placeholder: In a real app, you'd call viewModel.onContentFinished() when the content
-    // (e.g., video) naturally finishes, or rely on the timed cycle in DisplayViewModel.
+    // The onFinished callback is passed to renderers that support it (like Video)
+    // For static content like Images, or content with its own indefinite duration (some HTML/Web), 
+    // the DisplayViewModel's timed cycle manages the transition.
 }
 
 // Example of how a specific renderer might look (to be created in separate files)
