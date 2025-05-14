@@ -14,7 +14,7 @@ import javax.inject.Inject
 // Defines the possible navigation destinations from the Splash screen
 sealed class SplashDestination {
     object Registration : SplashDestination()
-    object Display : SplashDestination()
+    data class Display(val layoutId: String = "default_layout") : SplashDestination()
     object Undetermined : SplashDestination() // Initial state, or while an operation is in progress
 }
 
@@ -37,10 +37,13 @@ class SplashViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            // Make sure the device has a valid ID
+            val deviceId = generateDeviceId()
+            
             // Actual check for registration status
             if (deviceRepository.isDeviceRegistered()) {
                 // Potentially load initial layout ID or other necessary data here too
-                _navigateTo.value = SplashDestination.Display
+                _navigateTo.value = SplashDestination.Display()
             } else {
                 _navigateTo.value = SplashDestination.Registration
             }
@@ -55,7 +58,7 @@ class SplashViewModel @Inject constructor(
     }
 
     // Placeholder for a real device ID generation/retrieval mechanism
-    private suspend fun ઉત્પાદનDeviceId(): String {
+    private suspend fun generateDeviceId(): String {
         // In a real app, this would use Android ID or a securely generated unique ID
         // For now, using a simple timestamp-based ID for uniqueness in dev
         // Ensure this is robust and respects privacy guidelines.

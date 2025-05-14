@@ -2,8 +2,10 @@ package com.signagepro.app.di
 
 import android.content.Context
 import androidx.room.Room
-import com.signagepro.app.core.data.local.AppDatabase
-import com.signagepro.app.core.data.local.dao.ContentDao
+import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
+import com.signagepro.app.core.data.local.dao.LayoutDao
+import com.signagepro.app.core.data.local.dao.MediaItemDao
+import com.signagepro.app.core.data.local.db.SignageProDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,11 +19,11 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext appContext: Context): AppDatabase {
+    fun provideAppDatabase(@ApplicationContext appContext: Context): SignageProDatabase {
         return Room.databaseBuilder(
             appContext,
-            AppDatabase::class.java,
-            "signage_pro_db"
+            SignageProDatabase::class.java,
+            SignageProDatabase.DATABASE_NAME
         )
         .fallbackToDestructiveMigration() // Consider a proper migration strategy for production
         .build()
@@ -29,9 +31,19 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideContentDao(appDatabase: AppDatabase): ContentDao {
-        return appDatabase.contentDao()
+    fun provideLayoutDao(appDatabase: SignageProDatabase): LayoutDao {
+        return appDatabase.layoutDao()
     }
 
-    // Provide other DAOs here if you have more
+    @Provides
+    @Singleton
+    fun provideMediaItemDao(appDatabase: SignageProDatabase): MediaItemDao {
+        return appDatabase.mediaItemDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeviceSettingsDao(appDatabase: SignageProDatabase): DeviceSettingsDao {
+        return appDatabase.deviceSettingsDao()
+    }
 }

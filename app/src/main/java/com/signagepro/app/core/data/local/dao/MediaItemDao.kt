@@ -58,7 +58,7 @@ interface MediaItemDao {
     @Query("""
         DELETE FROM media_items 
         WHERE id NOT IN (
-            SELECT mediaItemId FROM layout_media_item_cross_refs WHERE layoutId = :layoutId
+            SELECT mediaItemId FROM layout_media_item_cross_ref WHERE layoutId = :layoutId
         )
     """)
     suspend fun deleteMediaItemsNotInLayout(layoutId: String)

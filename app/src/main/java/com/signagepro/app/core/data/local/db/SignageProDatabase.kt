@@ -18,7 +18,7 @@ import com.signagepro.app.core.data.local.model.MediaItemEntity
         LayoutMediaItemCrossRef::class
     ],
     version = 1, // Start with version 1. Increment on schema changes.
-    exportSchema = true // Recommended to export schema for migrations
+    exportSchema = false // Recommended to export schema for migrations
 )
 //@TypeConverters(Converters::class) // Add if you have type converters
 abstract class SignageProDatabase : RoomDatabase() {
