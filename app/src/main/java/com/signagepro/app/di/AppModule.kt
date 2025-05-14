@@ -7,6 +7,9 @@ import com.signagepro.app.core.util.CoroutineDispatchers
 import com.signagepro.app.core.utils.Constants
 import com.signagepro.app.core.utils.NetworkMonitor
 import com.signagepro.app.core.utils.NetworkMonitorImpl
+import com.signagepro.app.features.display.manager.CacheManager
+import com.signagepro.app.features.display.manager.ContentCacheManager
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -45,5 +48,14 @@ object AppModule {
     @Singleton
     fun provideNetworkMonitor(@ApplicationContext context: Context): NetworkMonitor {
         return NetworkMonitorImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCacheManager(
+        @ApplicationContext context: Context, 
+        okHttpClient: okhttp3.OkHttpClient
+    ): CacheManager {
+        return ContentCacheManager(context, okHttpClient)
     }
 } 
