@@ -18,8 +18,7 @@ interface MediaItemDao {
     @Delete
     suspend fun delete(mediaItem: MediaItemEntity)
 
-    @Query("SELECT * FROM media_items WHERE id = :id")
-    suspend fun getById(id: Long): MediaItemEntity?
+    @Query(
 
     @Query("SELECT * FROM media_items WHERE id IN (:ids)")
     suspend fun getMediaItemsByIds(ids: List<Long>): List<MediaItemEntity>
@@ -68,4 +67,11 @@ interface MediaItemDao {
      */
     @Query("DELETE FROM media_items")
     suspend fun deleteAll()
-} 
+
+    @Query("""
+        SELECT mi.* FROM media_items mi
+        INNER JOIN layout_media_item_cross_ref lmicr ON mi.id = lmicr.mediaItemId
+        WHERE lmicr.layoutId = :layoutId
+    """)
+    fun getMediaItemsByLayoutId(layoutId: Long): Flow<List<MediaItemEntity>>
+}

@@ -65,7 +65,7 @@ interface DeviceRepository {
      /**
      * Retrieves the current application status locally.
      */
-    fun getApplicationStatus(): Flow<Result<ApplicationStatus>>
+    suspend fun getApplicationStatus(): Result<ApplicationStatus>
 
     /**
      * Updates the local application status.

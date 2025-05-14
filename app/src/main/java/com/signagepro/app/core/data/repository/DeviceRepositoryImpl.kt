@@ -107,12 +107,19 @@ class DeviceRepositoryImpl @Inject constructor(
         val currentSettings = deviceSettingsDao.getDeviceSettingsSnapshot()
         if (currentSettings?.deviceId != deviceId) {
             deviceSettingsDao.saveDeviceSettings(
-                currentSettings?.copy(deviceId = deviceId) ?: DeviceSettingsEntity(deviceId = deviceId)
+                currentSettings?.copy(deviceId = deviceId) ?: DeviceSettingsEntity(
+                    deviceId = deviceId,
+                    playerId = null,
+                    currentLayoutId = null,
+                    registrationToken = null,
+                    lastHeartbeatTimestamp = null,
+                    lastSuccessfulSyncTimestamp = null
+                )
             )
         }
     }
     
-    override fun getApplicationStatus(): Flow<Result<ApplicationStatus>> {
+    override suspend fun getApplicationStatus(): Result<ApplicationStatus> {
         // TODO: Implement logic to construct and return current app status
         val dummyStatus = ApplicationStatus(
             deviceId = getDeviceId(),
@@ -127,7 +134,7 @@ class DeviceRepositoryImpl @Inject constructor(
             appVersion = BuildConfig.VERSION_NAME,
             isScreenOn = true // TODO: Check screen state
         )
-        return kotlinx.coroutines.flow.flowOf(Result.Success(dummyStatus))
+        return Result.Success(dummyStatus)
     }
 
     override suspend fun updateApplicationStatus(status: ApplicationStatus): Result<Unit> {
@@ -145,7 +152,14 @@ class DeviceRepositoryImpl @Inject constructor(
             val currentDeviceId = getDeviceId() // Ensures it's generated and saved to prefs if new
             var settings = deviceSettingsDao.getDeviceSettingsSnapshot()
             if (settings == null) {
-                settings = DeviceSettingsEntity(deviceId = currentDeviceId)
+                settings = DeviceSettingsEntity(
+                    deviceId = currentDeviceId,
+                    playerId = null,
+                    currentLayoutId = null,
+                    registrationToken = null,
+                    lastHeartbeatTimestamp = null,
+                    lastSuccessfulSyncTimestamp = null
+                )
                 deviceSettingsDao.saveDeviceSettings(settings)
             } else if (settings.deviceId != currentDeviceId) {
                 settings = settings.copy(deviceId = currentDeviceId)
@@ -175,7 +189,14 @@ class DeviceRepositoryImpl @Inject constructor(
                     val data = apiResponseBody.data!! // This is dto.DeviceRegistrationResponse
                     sharedPrefsManager.saveAuthToken(data.deviceToken)
                     // Update DeviceSettingsEntity
-                    val updatedSettings = (deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(deviceId = currentDeviceId))
+                    val updatedSettings = (deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
+                        deviceId = currentDeviceId,
+                        playerId = null,
+                        currentLayoutId = null,
+                        registrationToken = null,
+                        lastHeartbeatTimestamp = null,
+                        lastSuccessfulSyncTimestamp = null
+                    ))
                         .copy(
                             registrationToken = data.deviceToken,
                             isRegistered = true,
@@ -201,7 +222,14 @@ class DeviceRepositoryImpl @Inject constructor(
         return deviceSettingsDao.getDeviceSettings().map { settings ->
             val currentDeviceId = getDeviceId() // Ensure deviceId is available
             if (settings == null) {
-                val newSettings = DeviceSettingsEntity(deviceId = currentDeviceId)
+                val newSettings = DeviceSettingsEntity(
+                    deviceId = currentDeviceId,
+                    playerId = null,
+                    currentLayoutId = null,
+                    registrationToken = null,
+                    lastHeartbeatTimestamp = null,
+                    lastSuccessfulSyncTimestamp = null
+                )
                 deviceSettingsDao.saveDeviceSettings(newSettings)
                 newSettings
             } else if (settings.deviceId.isNullOrBlank() || settings.deviceId != currentDeviceId) {
@@ -216,7 +244,14 @@ class DeviceRepositoryImpl @Inject constructor(
     }
     
     override suspend fun updateCurrentLayoutId(layoutId: Long?) = withContext(dispatchers.io) {
-        val settings = deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(deviceId = getDeviceId())
+        val settings = deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
+            deviceId = getDeviceId(),
+            playerId = null,
+            currentLayoutId = null,
+            registrationToken = null,
+            lastHeartbeatTimestamp = null,
+            lastSuccessfulSyncTimestamp = null
+        )
         deviceSettingsDao.saveDeviceSettings(settings.copy(currentLayoutId = layoutId))
     }
 
