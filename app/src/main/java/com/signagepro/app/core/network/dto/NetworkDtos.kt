@@ -1,6 +1,8 @@
 package com.signagepro.app.core.network.dto
 
 import com.google.gson.annotations.SerializedName
+import com.signagepro.app.core.data.local.model.LayoutEntity
+import com.signagepro.app.core.data.local.model.MediaItemEntity
 
 // --- Registration --- //
 data class DeviceRegistrationRequest(
@@ -60,4 +62,29 @@ data class HeartbeatRequest(
     @SerializedName("current_media_id") val currentMediaId: Long?,
     @SerializedName("app_version") val appVersion: String,
     @SerializedName("error_message") val errorMessage: String? = null
-) 
+)
+
+// Mapper functions
+fun LayoutDto.toEntity(): LayoutEntity {
+    return LayoutEntity(
+        id = this.id,
+        name = this.name
+        // lastSyncTimestamp will use its default value System.currentTimeMillis()
+    )
+}
+
+fun MediaItemDto.toEntity(): MediaItemEntity {
+    return MediaItemEntity(
+        id = this.id,
+        type = this.type,
+        url = this.url,
+        durationSeconds = this.durationSeconds,
+        orderInLayout = this.order, // DTO 'order' maps to Entity 'orderInLayout'
+        localPath = null, // Will be set after file is cached
+        filename = this.filename,
+        mimeType = this.mimeType,
+        sizeBytes = this.sizeBytes,
+        checksum = this.checksum
+        // lastAccessed will use its default value System.currentTimeMillis()
+    )
+} 

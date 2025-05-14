@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" // Added for Kotlinx Serialization
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp") // For KSP-based annotation processing
     id("com.google.gms.google-services") // For Firebase
@@ -99,6 +100,9 @@ dependencies {
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    // Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3") // Added for Kotlinx Serialization
     // Add Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
 

@@ -1,6 +1,7 @@
 package com.signagepro.app
 
 import android.app.Application
+import com.signagepro.app.BuildConfig
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
