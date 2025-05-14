@@ -62,7 +62,7 @@ class SplashViewModel @Inject constructor(
         // In a real app, this would use Android ID or a securely generated unique ID
         // For now, using a simple timestamp-based ID for uniqueness in dev
         // Ensure this is robust and respects privacy guidelines.
-        var id = deviceRepository.getDeviceId().firstOrNull()
+        var id = deviceRepository.getDeviceId()
         if (id.isNullOrEmpty()) {
             id = "temp_id_" + System.currentTimeMillis().toString()
             deviceRepository.saveDeviceId(id)

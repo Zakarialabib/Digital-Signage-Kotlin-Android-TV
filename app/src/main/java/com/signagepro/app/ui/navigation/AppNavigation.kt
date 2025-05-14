@@ -56,8 +56,8 @@ fun AppNavigation(
                     SplashDestination.Display -> {
                         coroutineScope.launch {
                             // Fetch the current layout ID from DeviceRepository
-                            val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings()
-                            val currentLayoutId = deviceSettings?.currentLayoutId ?: "default"
+                            val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
+                            val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                             
                             navController.navigate(Screen.Display.createRoute(currentLayoutId)) {
                                 popUpTo(Screen.Splash.route) { inclusive = true }
@@ -80,8 +80,8 @@ fun AppNavigation(
                     // On successful registration, navigate to Display
                     // The layoutId should have been set in DeviceRepository during registration
                     coroutineScope.launch {
-                        val deviceSettings = registrationViewModel.deviceRepository.getDeviceSettings()
-                        val assignedLayoutId = deviceSettings?.currentLayoutId ?: "default"
+                        val deviceSettings = registrationViewModel.deviceRepository.getDeviceSettings().firstOrNull()
+                        val assignedLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                         
                         navController.navigate(Screen.Display.createRoute(assignedLayoutId)) {
                             popUpTo(Screen.Registration.route) { inclusive = true }

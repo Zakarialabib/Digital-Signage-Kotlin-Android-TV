@@ -7,6 +7,8 @@ import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.data.repository.ContentRepository
 import com.signagepro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.data.repository.Playlist
+import com.signagepro.app.core.data.repository.Content
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.features.display.manager.PlaylistManager
@@ -28,6 +30,8 @@ sealed class DisplayUiState {
     object Loading : DisplayUiState()
     data class Error(val message: String) : DisplayUiState()
     data class Success(val layout: LayoutWithMediaItems) : DisplayUiState()
+    object NoPlaylistAssigned : DisplayUiState()
+    object EmptyPlaylist : DisplayUiState()
     // Note: currentMediaItem is now observed directly from playlistManager.currentItemFlow
 }
 
@@ -60,7 +64,7 @@ class DisplayViewModel @Inject constructor(
         
         // Load layout based on layoutId
         viewModelScope.launch {
-            val layoutIdToUse = _layoutId.value ?: deviceRepository.getDeviceSettings()?.currentLayoutId
+            val layoutIdToUse = _layoutId.value ?: deviceRepository.getDeviceSettings().firstOrNull()?.currentLayoutId?.toString()
             
             if (layoutIdToUse.isNullOrBlank()) {
                 _uiState.value = DisplayUiState.Error("No Layout ID specified or found")
@@ -83,7 +87,7 @@ class DisplayViewModel @Inject constructor(
                     _uiState.value = DisplayUiState.Success(layoutWithItems)
                     
                     // Update device settings with current layout ID
-                    deviceRepository.updateCurrentLayoutId(layoutId)
+                    deviceRepository.updateCurrentLayoutId(layoutId.toLongOrNull())
                     
                     // Load media items into playlist manager
                     playlistManager.loadPlaylist(layoutWithItems.mediaItems)
@@ -141,7 +145,7 @@ class DisplayViewModel @Inject constructor(
                     if (result is Result.Success) {
                         val layout = result.data
                         // Only update UI state and playlist if necessary (e.g., if layout changed)
-                        if ((_uiState.value as? DisplayUiState.Success)?.layout?.layout?.lastUpdated != layout.layout.lastUpdated) {
+                        if ((_uiState.value as? DisplayUiState.Success)?.layout?.layout?.lastSyncTimestamp != layout.layout.lastSyncTimestamp) {
                             _uiState.value = DisplayUiState.Success(layout)
                             playlistManager.loadPlaylist(layout.mediaItems)
                             Logger.i("DisplayViewModel: Periodic refresh updated layout $layoutId")
@@ -181,20 +185,27 @@ class DisplayViewModel @Inject constructor(
                     _uiState.value = DisplayUiState.Error("Failed to load playlist: ${e.message}")
                 }
                 .collectLatest { result ->
-                    result.fold(
-                        onSuccess = { playlist ->
+                    when (result) {
+                        is Result.Success -> {
+                            val playlist = result.data
                             currentPlaylist = playlist
                             if (playlist.items.isEmpty()) {
                                 _uiState.value = DisplayUiState.EmptyPlaylist
                             } else {
-                                contentRepository.preloadPlaylistContent(playlist) // Fire and forget preloading
-                                startContentCycle()
+                                // TODO: Preloading content might need to be more sophisticated
+                                // and its result handled, or done in PlaylistManager.
+                                // For now, assuming it's a fire-and-forget helper.
+                                viewModelScope.launch { contentRepository.preloadPlaylistContent(playlist) }
+                                startContentCycle() // This should now probably use playlistManager
                             }
-                        },
-                        onFailure = { throwable ->
-                            _uiState.value = DisplayUiState.Error("Failed to load playlist: ${throwable.message}")
                         }
-                    )
+                        is Result.Error -> {
+                            _uiState.value = DisplayUiState.Error("Failed to load playlist: ${result.exception.message}")
+                        }
+                        is Result.Loading -> {
+                            _uiState.value = DisplayUiState.Loading // Or handle as per UI needs
+                        }
+                    }
                 }
         }
     }
@@ -203,17 +214,42 @@ class DisplayViewModel @Inject constructor(
         contentCycleJob?.cancel()
         contentCycleJob = viewModelScope.launch {
             currentPlaylist?.let { playlist ->
-                if (playlist.items.isEmpty()) return@launch
-                currentContentIndex = (currentContentIndex + 1) % playlist.items.size
-                val currentContent = playlist.items[currentContentIndex]
-                val nextContent = if (playlist.items.size > 1) playlist.items[(currentContentIndex + 1) % playlist.items.size] else null
+                if (playlist.items.isEmpty()) {
+                    // If items became empty after loading, reflect this.
+                    // Or rely on PlaylistManager to handle empty state.
+                    // _uiState.value = DisplayUiState.EmptyPlaylist // Potentially update UI state
+                    Logger.w("startContentCycle: Current playlist is empty, stopping cycle.")
+                    playlistManager.stopPlaylist() // Ensure manager also knows
+                    return@launch
+                }
+                // currentContentIndex = (currentContentIndex + 1) % playlist.items.size // This logic is now in PlaylistManager
+                // val currentContent = playlist.items[currentContentIndex]
+                // val nextContent = if (playlist.items.size > 1) playlist.items[(currentContentIndex + 1) % playlist.items.size] else null
                 
-                _uiState.value = DisplayUiState.Success(playlist.layout)
-                reportCurrentContent(currentContent)
+                // _uiState.value = DisplayUiState.Success(playlist.layout) // This is problematic, Playlist doesn't have 'layout'
+                // The DisplayUiState.Success should be driven by the loaded LayoutWithMediaItems
+                // The PlaylistManager should drive the currentMediaItem which is observed by the UI
+                
+                // reportCurrentContent(currentContent) // Logic for reporting current content should use PlaylistManager's state
 
-                val duration = if (currentContent.duration > 0) currentContent.duration.toLong() * 1000 else 5000L // Default 5s
-                delay(duration)
-                startContentCycle() // Loop
+                // The duration and delay logic should be handled by PlaylistManager.
+                // val duration = if (currentContent.duration > 0) currentContent.duration.toLong() * 1000 else 5000L
+                // delay(duration)
+                // startContentCycle() // Loop is handled by PlaylistManager or its item consumption
+                
+                // For now, if we are manually cycling here with the old playlist model:
+                // We need a way to update the UI with the current item. This ViewModel doesn't directly show it anymore.
+                // The UI observes playlistManager.currentItemFlow.
+                // This startContentCycle and the direct playlist handling here needs to be re-evaluated
+                // against the responsibilities of PlaylistManager.
+                // For now, let's assume PlaylistManager is the primary driver of content display.
+                // The old code for startContentCycle seems to duplicate PlaylistManager's role.
+                
+                // If loadInitialPlaylist is meant to populate the old `currentPlaylist` for some other logic,
+                // that logic also needs review.
+                // The PlaylistManager should be the source of truth for what's playing.
+                Logger.d("Old startContentCycle was called. This logic should be reviewed as PlaylistManager handles item cycling.")
+
             }
         }
     }

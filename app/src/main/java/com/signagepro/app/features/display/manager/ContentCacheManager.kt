@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.sink
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -72,9 +73,11 @@ class ContentCacheManager @Inject constructor(
                 if (!response.isSuccessful) throw IOException("Failed to download ${mediaItem.url}: ${response.code} ${response.message}")
 
                 response.body?.let { body ->
-                    FileOutputStream(targetFile).use { outputStream ->
-                        body.source().use { source ->
-                            source.readAll(outputStream)
+                    FileOutputStream(targetFile).use { fileOutputStream ->
+                        fileOutputStream.sink().use { sink ->
+                            body.source().use { source ->
+                                source.readAll(sink)
+                            }
                         }
                     }
                     Logger.i("ContentCacheManager: Downloaded ${targetFile.name} successfully.")
