@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-sealed class SplashUiState {
-    object Loading : SplashUiState()
-    data class NavigateToRegistration(val deviceId: String?) : SplashUiState()
-    data class NavigateToDisplay(val deviceId: String?, val playlistId: String?) : SplashUiState() // Assuming we might get a playlist ID early
-    data class Error(val message: String) : SplashUiState()
+// Defines the possible navigation destinations from the Splash screen
+sealed class SplashDestination {
+    object Registration : SplashDestination()
+    object Display : SplashDestination()
+    object Undetermined : SplashDestination() // Initial state, or while an operation is in progress
 }
 
 @HiltViewModel
@@ -23,34 +23,35 @@ class SplashViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<SplashUiState>(SplashUiState.Loading)
-    val uiState: StateFlow<SplashUiState> = _uiState.asStateFlow()
+    private val _navigateTo = MutableStateFlow<SplashDestination>(SplashDestination.Undetermined)
+    val navigateTo = _navigateTo.asStateFlow()
 
-    init {
-        checkDeviceStatus()
-    }
+    /**
+     * Checks the device registration status and other initial conditions
+     * to decide the next screen.
+     */
+    fun decideNextScreen() {
+        // Ensure we don't re-trigger if already decided or in progress from a previous call
+        if (_navigateTo.value != SplashDestination.Undetermined) {
+            // return // Or allow re-check if needed
+        }
 
-    fun checkDeviceStatus() {
         viewModelScope.launch {
-            _uiState.value = SplashUiState.Loading
-            try {
-                val apiKey = deviceRepository.getDeviceApiKey().firstOrNull()
-                val deviceId = deviceRepository.getDeviceId().firstOrNull()
-                
-                if (apiKey.isNullOrEmpty() || deviceId.isNullOrEmpty()) {
-                    // Potentially generate and save a new device ID if it's truly the first launch
-                    val idToRegister = deviceId ?: ઉત્પાદનDeviceId() // A hypothetical function to generate a new ID
-                    if(deviceId.isNullOrEmpty()) deviceRepository.saveDeviceId(idToRegister)
-                    _uiState.value = SplashUiState.NavigateToRegistration(idToRegister)
-                } else {
-                    // Here, we might also want to fetch initial playlist or configuration
-                    // For now, just navigate to display
-                    _uiState.value = SplashUiState.NavigateToDisplay(deviceId, null) 
-                }
-            } catch (e: Exception) {
-                _uiState.value = SplashUiState.Error(e.message ?: "An unknown error occurred")
+            // Actual check for registration status
+            if (deviceRepository.isDeviceRegistered()) {
+                // Potentially load initial layout ID or other necessary data here too
+                _navigateTo.value = SplashDestination.Display
+            } else {
+                _navigateTo.value = SplashDestination.Registration
             }
         }
+    }
+
+    /**
+     * Resets the navigation state, perhaps if re-entering splash or an error occurs.
+     */
+    fun resetNavigation() {
+        _navigateTo.value = SplashDestination.Undetermined
     }
 
     // Placeholder for a real device ID generation/retrieval mechanism

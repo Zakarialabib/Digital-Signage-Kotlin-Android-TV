@@ -23,120 +23,109 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.signagepro.app.features.registration.viewmodel.RegistrationUiState
 import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
+import com.signagepro.app.core.utils.Logger
 
 @Composable
 fun RegistrationScreen(
     viewModel: RegistrationViewModel = hiltViewModel(),
-    deviceId: String?,
-    onRegistrationComplete: () -> Unit
+    onRegistrationSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    val deviceId by viewModel.deviceId.collectAsState()
 
-    LaunchedEffect(deviceId) {
-        if (deviceId != null) {
-            viewModel.initiateRegistration(deviceId)
-        } else {
-            // Handle error: deviceId is null, perhaps navigate back or show error
-        }
-    }
-
+    // Handle navigation on successful registration
     LaunchedEffect(uiState) {
-        if (uiState is RegistrationUiState.RegistrationSuccessful) {
-            onRegistrationComplete()
+        if (uiState is RegistrationUiState.Success) {
+            Logger.i("Registration successful, navigating...")
+            onRegistrationSuccess()
         }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(32.dp)
+            modifier = Modifier.fillMaxWidth(0.7f) // Limit width for better TV display
         ) {
             Text(
-                text = "Register Your Device",
-                fontSize = 32.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.headlineMedium
+                text = "Device Registration",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
 
+            Text(
+                text = "Please use the following Device ID to register this screen with the management console:",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (deviceId != null) {
+                Text(
+                    text = deviceId ?: "Loading Device ID...",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(8.dp)
+                )
+            } else {
+                CircularProgressIndicator(modifier = Modifier.size(48.dp))
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             when (val state = uiState) {
-                is RegistrationUiState.Idle, is RegistrationUiState.Loading -> {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = if (state is RegistrationUiState.Loading) state.message else "Initializing...",
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                is RegistrationUiState.Idle, is RegistrationUiState.DisplayDeviceId -> {
+                    Button(
+                        onClick = { viewModel.attemptRegistration() },
+                        modifier = Modifier.fillMaxWidth(0.8f).height(50.dp)
+                    ) {
+                        Text("Attempt/Confirm Registration", fontSize = 18.sp)
+                    }
                 }
-                is RegistrationUiState.AwaitingRegistration -> {
-                    Text(
-                        text = "Scan the QR code below with the SignagePro admin app or visit example.com/register and enter the code.",
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    state.qrCodeBitmap?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            contentDescription = "Registration QR Code",
-                            modifier = Modifier.size(200.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
+                is RegistrationUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(16.dp))
+                    Text("Registering... Please wait.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                is RegistrationUiState.Success -> {
                     Text(
-                        text = "Or enter code: ${state.registrationCode}",
-                        fontSize = 22.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        state.message ?: "Registration Confirmed!", 
+                        color = Color(0xFF4CAF50), // Green color for success
+                        style = MaterialTheme.typography.titleMedium
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    // This button is for demo/testing. In a real app, registration might be polled
-                    // or confirmed via a push notification/websocket.
-                    Button(onClick = { viewModel.confirmRegistration(state.registrationCode) }) {
-                        Text("DEBUG: Confirm Registration")
-                    }
-                    Button(onClick = { viewModel.refreshQrCode() }) {
-                        Text("Refresh QR Code")
-                    }
+                    // Navigation is handled by LaunchedEffect
                 }
                 is RegistrationUiState.Error -> {
                     Text(
-                        text = "Error: ${state.message}",
-                        fontSize = 18.sp,
+                        state.message,
                         color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        deviceId?.let { viewModel.initiateRegistration(it) } 
-                    }) {
-                        Text("Retry")
+                    Button(
+                        onClick = { viewModel.attemptRegistration() }, // Retry
+                        modifier = Modifier.fillMaxWidth(0.8f).height(50.dp)
+                    ) {
+                        Text("Retry Registration", fontSize = 18.sp)
                     }
                 }
-                is RegistrationUiState.RegistrationSuccessful -> {
-                    Text(
-                        text = "Registration Successful!",
-                        fontSize = 22.sp,
-                        color = Color(0xFF4CAF50) // Green color for success
-                    )
-                    Text(
-                        text = "Loading content...",
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "After registering on the console, press the button above or wait for automatic confirmation.",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

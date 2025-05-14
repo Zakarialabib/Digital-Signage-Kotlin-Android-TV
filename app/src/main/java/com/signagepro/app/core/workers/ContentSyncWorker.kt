@@ -4,17 +4,21 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.repository.ContentRepository
+import com.signagepro.app.core.utils.Logger
+import com.signagepro.app.core.utils.Result
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import timber.log.Timber
+import kotlinx.coroutines.flow.firstOrNull
 
 @HiltWorker
 class ContentSyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val contentRepository: ContentRepository
-    // Potentially SharedPreferencesManager if needed for layoutId etc.
+    private val contentRepository: ContentRepository,
+    private val deviceSettingsDao: DeviceSettingsDao
+    // Add FileDownloader/CacheManager if direct interaction needed here
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -22,31 +26,42 @@ class ContentSyncWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
-        Timber.d("$WORK_NAME: Starting work.")
+        Logger.i("ContentSyncWorker: Starting work.")
+        try {
+            val settings = deviceSettingsDao.getDeviceSettingsSnapshot()
+            if (settings == null || !settings.isRegistered || settings.deviceId.isNullOrBlank()) {
+                Logger.w("ContentSyncWorker: Device not registered or no device ID. Skipping content sync.")
+                return Result.success() // Not an error, just can't sync yet
+            }
 
-        return try {
-            // Example: Fetch latest layout and sync content
-            // This is a placeholder for the actual content sync logic,
-            // which would involve calling methods on contentRepository.
-            Timber.i("$WORK_NAME: Placeholder for content synchronization logic. Attempting to call contentRepository.syncContent().")
-            
-            // val success = contentRepository.syncContent() // This method needs to be defined in ContentRepository
-            // For now, we assume the call is made and simulate its completion.
-            // Replace with actual call and error handling based on repository's response.
-            kotlinx.coroutines.delay(5000) // Simulate network/disk IO
+            // Fetch and cache the latest layout. The repository handles DB storage.
+            val fetchResult = contentRepository.fetchAndCacheLayout(settings.deviceId!!, settings.currentLayoutId).firstOrNull()
 
-            // if (success) {
-            //    Timber.i("$WORK_NAME: Content synchronized successfully.")
-            //    Result.success()
-            // } else {
-            //    Timber.w("$WORK_NAME: Content synchronization failed. Retrying.")
-            //    Result.retry()
-            // }
-            Timber.i("$WORK_NAME: Placeholder content synchronization finished.")
-            Result.success() // Placeholder success
+            return when (fetchResult) {
+                is com.signagepro.app.core.utils.Result.Success -> {
+                    Logger.i("ContentSyncWorker: Content sync successful.")
+                    // TODO: Optionally trigger pre-downloading of new/updated media items from the layout
+                    // This would involve getting the LayoutWithMediaItems, iterating, and using a downloader.
+                    deviceSettingsDao.updateLastSuccessfulSyncTimestamp(System.currentTimeMillis())
+                    Result.success()
+                }
+                is com.signagepro.app.core.utils.Result.Error -> {
+                    Logger.e(fetchResult.exception, "ContentSyncWorker: Content sync failed.")
+                    Result.retry()
+                }
+                is com.signagepro.app.core.utils.Result.Loading -> {
+                    // Should not happen with firstOrNull(), but handle defensively
+                    Logger.w("ContentSyncWorker: Still loading, will retry.")
+                    Result.retry()
+                }
+                null -> {
+                    Logger.e("ContentSyncWorker: Fetch result was null. Unknown error.")
+                    Result.retry()
+                }
+            }
         } catch (e: Exception) {
-            Timber.e(e, "$WORK_NAME: Error during content synchronization.")
-            Result.retry() // Or Result.failure() for non-recoverable errors
+            Logger.e(e, "ContentSyncWorker: Exception during content sync.")
+            return Result.retry()
         }
     }
 }

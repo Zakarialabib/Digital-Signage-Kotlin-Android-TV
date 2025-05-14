@@ -15,31 +15,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.signagepro.app.features.display.viewmodel.DisplayUiState
-import com.signagepro.app.features.display.viewmodel.DisplayViewModel
-import com.signagepro.app.core.data.model.Content
-// Import specific renderers
-import com.signagepro.app.features.display.renderers.HtmlRenderer
+import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.features.display.renderers.ImageRenderer
 import com.signagepro.app.features.display.renderers.VideoRenderer
-import com.signagepro.app.features.display.renderers.WebPageRenderer
+import com.signagepro.app.features.display.renderers.WebRenderer
+import com.signagepro.app.features.display.viewmodel.DisplayUiState
+import com.signagepro.app.features.display.viewmodel.DisplayViewModel
 
 @Composable
 fun DisplayScreen(
-    viewModel: DisplayViewModel = hiltViewModel(),
-    playlistId: String? // Optional: can be passed via navigation
+    viewModel: DisplayViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // If playlistId is passed, viewModel can use it to load specific playlist
-    // LaunchedEffect(playlistId) {
-    //     playlistId?.let { viewModel.loadInitialPlaylist(it) }
-    // }
+    val currentMediaItem by viewModel.currentMediaItem.collectAsState()
+    val playlistError by viewModel.playlistError.collectAsState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black), // Default background for signage
+            .background(Color.Black), // Typical for signage display
         contentAlignment = Alignment.Center
     ) {
         when (val state = uiState) {
@@ -47,43 +41,73 @@ fun DisplayScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Loading Content...", fontSize = 20.sp, color = Color.White)
-                }
-            }
-            is DisplayUiState.Success -> {
-                // Render the current content
-                state.currentContent?.let { content ->
-                    RenderContent(content = content, viewModel = viewModel, onFinished = { viewModel.onContentFinished() })
-                } ?: run {
-                     Text("No content to display currently.", fontSize = 20.sp, color = Color.White)
+                    Text(
+                        "Loading layout...",
+                        color = Color.White,
+                        fontSize = 20.sp
+                    )
                 }
             }
             is DisplayUiState.Error -> {
                 Text(
-                    text = "Error: ${state.message}", 
-                    fontSize = 20.sp, 
+                    text = "Error: ${state.message}",
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
-                )
-                // TODO: Add a retry mechanism or specific error handling UI
-            }
-            is DisplayUiState.NoPlaylistAssigned -> {
-                Text(
-                    text = "No playlist is assigned to this device. Please configure it in the admin panel.",
-                    fontSize = 20.sp, 
-                    color = Color.Yellow,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
                 )
             }
-            is DisplayUiState.EmptyPlaylist -> {
+            is DisplayUiState.Success -> {
+                // Main content display area
+                if (currentMediaItem != null) {
+                    // Render the appropriate content based on type
+                    RenderContent(currentMediaItem!!)
+                    
+                    // Optional debug overlay
+                    /*
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Text(
+                            "Layout: ${state.layout.layout.name}",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .background(Color.Black.copy(alpha = 0.5f))
+                                .padding(4.dp)
+                        )
+                    }
+                    */
+                } else {
+                    // No current item from PlaylistManager, or playlist is empty
+                    Text(
+                        "Layout '${state.layout.layout.name}' is active, but no media items are available.",
+                        color = Color.Yellow,
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        }
+        
+        // Display PlaylistManager errors if any (overlay at bottom)
+        playlistError?.let {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp), 
+                contentAlignment = Alignment.BottomCenter
+            ) {
                 Text(
-                    text = "The assigned playlist is empty. Please add content to it.",
-                    fontSize = 20.sp, 
-                    color = Color.Yellow,
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 14.sp,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(8.dp)
                 )
             }
         }
@@ -91,63 +115,29 @@ fun DisplayScreen(
 }
 
 @Composable
-fun RenderContent(content: Content, viewModel: DisplayViewModel, onFinished: () -> Unit) {
-    // This is where different content types will be rendered.
-    // Each type will have its own Composable renderer function.
+fun RenderContent(mediaItem: MediaItemEntity) {
+    // This is where different content types will be rendered
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        when (content) {
-            is Content.Image -> {
-                ImageRenderer(imageContent = content)
-                // For images, onFinished is typically handled by DisplayViewModel's timer
+        when (mediaItem.type?.lowercase()) {
+            "image" -> {
+                ImageRenderer(mediaItem = mediaItem)
             }
-            is Content.Video -> {
-                VideoRenderer(videoContent = content, onFinished = onFinished)
+            "video" -> {
+                VideoRenderer(mediaItem = mediaItem)
             }
-            is Content.Html -> {
-                HtmlRenderer(htmlContent = content, onFinished = onFinished)
+            "web" -> {
+                WebRenderer(mediaItem = mediaItem)
             }
-            is Content.WebPage -> {
-                WebPageRenderer(webPageContent = content, onPageFinishedLoading = {
-                    // Optional: can log or perform action when page itself loads
-                    // Main content transition is handled by DisplayViewModel timer or onFinished
-                })
-                // For WebPage, onFinished is typically handled by DisplayViewModel's timer
-            }
-            // Carousel and Playlist might be handled differently, perhaps by the ViewModel 
-            // or a dedicated renderer that internally manages their items.
-            is Content.Carousel -> {
-                 Text("Displaying Carousel: ${content.id}", color = Color.White, fontSize = 24.sp)
-            }
-            is Content.Playlist -> {
-                 Text("Displaying Playlist: ${content.id}", color = Color.White, fontSize = 24.sp)
-            }
-            // Add other content types as needed
             else -> {
-                Text("Unsupported content type", color = Color.Red, fontSize = 24.sp)
+                // Fallback for unknown types
+                Text(
+                    "Unsupported content type: ${mediaItem.type}",
+                    color = Color.Red,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
     }
-    // The onFinished callback is passed to renderers that support it (like Video)
-    // For static content like Images, or content with its own indefinite duration (some HTML/Web), 
-    // the DisplayViewModel's timed cycle manages the transition.
 }
-
-// Example of how a specific renderer might look (to be created in separate files)
-/*
-@Composable
-fun ImageRenderer(imageContent: Content.Image, onFinished: () -> Unit) {
-    // Use Coil or Glide to load image
-    // Call onFinished if there's a specific event, though for static images, 
-    // the DisplayViewModel's timer will handle transitions.
-    AsyncImage(
-        model = imageContent.url,
-        contentDescription = "Display Image",
-        modifier = Modifier.fillMaxSize(),
-        contentScale = when(imageContent.scaleType) {
-            ImageScaleType.FIT_CENTER -> ContentScale.Fit
-            ImageScaleType.CENTER_CROP -> ContentScale.Crop
-            ImageScaleType.FILL_BOUNDS -> ContentScale.FillBounds
-        }
-    )
-}
-*/

@@ -2,6 +2,7 @@ package com.signagepro.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
+import timber.log.Timber
 
 /**
  * Main application class for the Digital Signage Android TV app.
@@ -14,9 +15,9 @@ class SignageProApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        // Initialize logging (would be implemented with Timber in actual code)
+        // Initialize logging
         if (BuildConfig.DEBUG) {
-            // Timber.plant(Timber.DebugTree())
+            Timber.plant(Timber.DebugTree())
         }
         
         // Initialize WorkManager for background tasks if needed

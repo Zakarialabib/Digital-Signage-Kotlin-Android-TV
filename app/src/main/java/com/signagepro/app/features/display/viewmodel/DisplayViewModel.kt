@@ -1,11 +1,15 @@
 package com.signagepro.app.features.display.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.signagepro.app.core.data.model.Content
-import com.signagepro.app.core.data.model.Playlist
+import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
+import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.data.repository.ContentRepository
 import com.signagepro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.utils.Logger
+import com.signagepro.app.core.utils.Result
+import com.signagepro.app.features.display.manager.PlaylistManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -16,31 +20,141 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 sealed class DisplayUiState {
     object Loading : DisplayUiState()
-    data class Success(val playlist: Playlist, val currentContent: Content?, val nextContent: Content?) : DisplayUiState()
     data class Error(val message: String) : DisplayUiState()
-    object NoPlaylistAssigned : DisplayUiState()
-    object EmptyPlaylist : DisplayUiState()
+    data class Success(val layout: LayoutWithMediaItems) : DisplayUiState()
+    // Note: currentMediaItem is now observed directly from playlistManager.currentItemFlow
 }
 
 @HiltViewModel
 class DisplayViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle, // Make it private val if only used in init
     private val contentRepository: ContentRepository,
-    private val deviceRepository: DeviceRepository // For reporting current content, etc.
+    private val deviceRepository: DeviceRepository
 ) : ViewModel() {
+
+    private val _layoutId = MutableStateFlow<String?>(savedStateHandle.get<String>("layoutId"))
+    // val layoutId: StateFlow<Long?> = _layoutId.asStateFlow() // Expose if needed by UI directly
 
     private val _uiState = MutableStateFlow<DisplayUiState>(DisplayUiState.Loading)
     val uiState: StateFlow<DisplayUiState> = _uiState.asStateFlow()
+
+    val playlistManager = PlaylistManager(viewModelScope)
+    val currentMediaItem: StateFlow<MediaItemEntity?> = playlistManager.currentItemFlow
+    val playlistError: StateFlow<String?> = playlistManager.playlistErrorFlow
 
     private var currentPlaylist: Playlist? = null
     private var currentContentIndex = -1
     private var contentCycleJob: Job? = null
 
     init {
-        loadInitialPlaylist()
+        // Setup error reporting
+        playlistError.onEach { errorMsg ->
+            errorMsg?.let { Logger.e("PlaylistManager Error: $it") }
+        }.launchIn(viewModelScope)
+        
+        // Load layout based on layoutId
+        viewModelScope.launch {
+            val layoutIdToUse = _layoutId.value ?: deviceRepository.getDeviceSettings()?.currentLayoutId
+            
+            if (layoutIdToUse.isNullOrBlank()) {
+                _uiState.value = DisplayUiState.Error("No Layout ID specified or found")
+                Logger.e("DisplayViewModel: No Layout ID for display")
+                return@launch
+            }
+            
+            loadLayout(layoutIdToUse)
+        }
+    }
+
+    private fun loadLayout(layoutId: String) {
+        viewModelScope.launch {
+            _uiState.value = DisplayUiState.Loading
+            
+            // Try to get cached layout first, then refresh if needed
+            when (val result = contentRepository.refreshContentIfNeeded(layoutId)) {
+                is Result.Success -> {
+                    val layoutWithItems = result.data
+                    _uiState.value = DisplayUiState.Success(layoutWithItems)
+                    
+                    // Update device settings with current layout ID
+                    deviceRepository.updateCurrentLayoutId(layoutId)
+                    
+                    // Load media items into playlist manager
+                    playlistManager.loadPlaylist(layoutWithItems.mediaItems)
+                    
+                    // Schedule periodic content sync
+                    scheduleContentSync(layoutId)
+                    
+                    Logger.i("DisplayViewModel: Layout $layoutId loaded successfully with ${layoutWithItems.mediaItems.size} media items")
+                }
+                
+                is Result.Error -> {
+                    val errorMsg = result.exception?.message ?: "Unknown error loading layout"
+                    _uiState.value = DisplayUiState.Error(errorMsg)
+                    Logger.e(result.exception, "DisplayViewModel: Error loading layout $layoutId")
+                    
+                    // Try to load from cache as fallback
+                    fallbackToCachedLayout(layoutId)
+                }
+                
+                is Result.Loading -> {
+                    // This shouldn't normally happen here since refreshContentIfNeeded is suspend
+                    _uiState.value = DisplayUiState.Loading
+                }
+            }
+        }
+    }
+    
+    private suspend fun fallbackToCachedLayout(layoutId: String) {
+        // Try to load directly from cache as fallback when network fails
+        when (val cacheResult = contentRepository.getCachedLayoutWithMediaItems(layoutId)) {
+            is Result.Success -> {
+                val layoutWithItems = cacheResult.data
+                _uiState.value = DisplayUiState.Success(layoutWithItems)
+                playlistManager.loadPlaylist(layoutWithItems.mediaItems)
+                Logger.w("DisplayViewModel: Falling back to cached layout $layoutId")
+            }
+            is Result.Error -> {
+                Logger.e(cacheResult.exception, "DisplayViewModel: Cache fallback also failed for layout $layoutId")
+                // State already set to Error from previous failure
+            }
+            else -> {} // Ignore
+        }
+    }
+    
+    private fun scheduleContentSync(layoutId: String) {
+        viewModelScope.launch {
+            // Periodically refresh content (every 15 minutes)
+            while (true) {
+                kotlinx.coroutines.delay(15 * 60 * 1000) // 15 minutes
+                
+                try {
+                    Logger.d("DisplayViewModel: Periodic content refresh for layout $layoutId")
+                    val result = contentRepository.refreshContentIfNeeded(layoutId, forceRefresh = false, maxAgeMinutes = 30)
+                    
+                    if (result is Result.Success) {
+                        val layout = result.data
+                        // Only update UI state and playlist if necessary (e.g., if layout changed)
+                        if ((_uiState.value as? DisplayUiState.Success)?.layout?.layout?.lastUpdated != layout.layout.lastUpdated) {
+                            _uiState.value = DisplayUiState.Success(layout)
+                            playlistManager.loadPlaylist(layout.mediaItems)
+                            Logger.i("DisplayViewModel: Periodic refresh updated layout $layoutId")
+                        } else {
+                            Logger.d("DisplayViewModel: Periodic refresh - layout content unchanged")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Logger.e(e, "DisplayViewModel: Error during periodic content refresh")
+                    // Continue loop, next attempt will happen in 15 minutes
+                }
+            }
+        }
     }
 
     fun loadInitialPlaylist(playlistIdFromArgs: String? = null) {
@@ -94,7 +208,7 @@ class DisplayViewModel @Inject constructor(
                 val currentContent = playlist.items[currentContentIndex]
                 val nextContent = if (playlist.items.size > 1) playlist.items[(currentContentIndex + 1) % playlist.items.size] else null
                 
-                _uiState.value = DisplayUiState.Success(playlist, currentContent, nextContent)
+                _uiState.value = DisplayUiState.Success(playlist.layout)
                 reportCurrentContent(currentContent)
 
                 val duration = if (currentContent.duration > 0) currentContent.duration.toLong() * 1000 else 5000L // Default 5s
@@ -130,8 +244,29 @@ class DisplayViewModel @Inject constructor(
         } ?: loadInitialPlaylist()
     }
 
+    fun reportCurrentItemError(itemId: Long, errorMessage: String) {
+        playlistManager.reportItemError(itemId, errorMessage)
+    }
+
+    fun skipToNextItem() {
+        playlistManager.skipToNextItem()
+    }
+
     override fun onCleared() {
         super.onCleared()
         contentCycleJob?.cancel()
+        playlistManager.stopPlaylist() // Ensure playlist manager resources are cleaned up
+        
+        // Cleanup resources
+        viewModelScope.launch {
+            try {
+                // Get current layout ID for cleanup
+                val layoutId = _layoutId.value ?: return@launch
+                // Cleanup unused media (keep only current layout's media)
+                contentRepository.cleanupUnusedMedia(layoutId)
+            } catch (e: Exception) {
+                Logger.e(e, "DisplayViewModel: Error during cleanup")
+            }
+        }
     }
 }

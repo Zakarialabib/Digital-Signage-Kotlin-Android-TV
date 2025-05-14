@@ -1,0 +1,102 @@
+package com.signagepro.app.ui.navigation
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.signagepro.app.features.display.ui.DisplayScreen
+import com.signagepro.app.features.registration.ui.RegistrationScreen
+import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
+import com.signagepro.app.features.splash.ui.SplashScreen 
+import com.signagepro.app.features.splash.viewmodel.SplashDestination
+import com.signagepro.app.features.splash.viewmodel.SplashViewModel
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+
+@Composable
+fun AppNavigation(
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController()
+) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Splash.route,
+        modifier = modifier
+    ) {
+        composable(Screen.Splash.route) {
+            val splashViewModel: SplashViewModel = hiltViewModel()
+            val splashDestination by splashViewModel.navigateTo.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
+
+            SplashScreen(onSplashFinished = {
+                // This callback is primarily for the visual delay in SplashScreen
+                splashViewModel.decideNextScreen() 
+            })
+
+            LaunchedEffect(splashDestination) {
+                when (splashDestination) {
+                    SplashDestination.Registration -> {
+                        navController.navigate(Screen.Registration.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                    SplashDestination.Display -> {
+                        coroutineScope.launch {
+                            // Fetch the current layout ID from DeviceRepository
+                            val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings()
+                            val currentLayoutId = deviceSettings?.currentLayoutId ?: "default"
+                            
+                            navController.navigate(Screen.Display.createRoute(currentLayoutId)) {
+                                popUpTo(Screen.Splash.route) { inclusive = true }
+                            }
+                        }
+                    }
+                    SplashDestination.Undetermined -> {
+                        // Stay on splash, ViewModel is deciding or hasn't started
+                    }
+                }
+            }
+        }
+
+        composable(Screen.Registration.route) { backStackEntry ->
+            val registrationViewModel = hiltViewModel<RegistrationViewModel>()
+            
+            RegistrationScreen(
+                viewModel = registrationViewModel,
+                onRegistrationSuccess = {
+                    // On successful registration, navigate to Display
+                    // The layoutId should have been set in DeviceRepository during registration
+                    coroutineScope.launch {
+                        val deviceSettings = registrationViewModel.deviceRepository.getDeviceSettings()
+                        val assignedLayoutId = deviceSettings?.currentLayoutId ?: "default"
+                        
+                        navController.navigate(Screen.Display.createRoute(assignedLayoutId)) {
+                            popUpTo(Screen.Registration.route) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+        
+        composable(
+            route = Screen.Display.route,
+            arguments = listOf(navArgument("layoutId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            // DisplayViewModel will get layoutId from SavedStateHandle
+            DisplayScreen()
+        }
+    }
+} 

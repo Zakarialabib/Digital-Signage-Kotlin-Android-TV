@@ -81,9 +81,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Media Playback
-    implementation("androidx.media3:media3-exoplayer:1.2.1")
-    implementation("androidx.media3:media3-ui:1.2.1")
-
+    implementation("androidx.media3:media3-exoplayer:1.X.X") // Replace X.X with the latest version
+    implementation("androidx.media3:media3-ui:1.X.X")
+    implementation("androidx.media3:media3-common:1.X.X")
+    
     // QR Code
     implementation("com.google.zxing:core:3.5.2")
 

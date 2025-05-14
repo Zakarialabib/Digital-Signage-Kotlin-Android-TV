@@ -1,34 +1,19 @@
 package com.signagepro.app.core.data.local.model
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
-import com.signagepro.app.core.data.local.db.Converters // Assuming Converters for complex types
 
-@Entity(
-    tableName = "media_items",
-    foreignKeys = [
-        ForeignKey(
-            entity = LayoutEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["layoutId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["layoutId"])]
-)
+@Entity(tableName = "media_items")
 data class MediaItemEntity(
-    @PrimaryKey val id: String,
-    val layoutId: String, // Foreign key to LayoutEntity
-    val type: String, // e.g., "image", "video", "web"
-    val url: String, // URL to the content
-    val duration: Int, // Duration in seconds
-    val checksum: String? = null,
-    var localPath: String? = null, // Path if downloaded locally
-    val orderInLayout: Int = 0, // To maintain order within a layout
-    val lastSyncTimestamp: Long = System.currentTimeMillis(),
-    @TypeConverters(Converters::class)
-    val meta: Map<String, String>? = null // For any additional custom metadata
+    @PrimaryKey val id: Long, // Corresponds to MediaItemDto.id from backend
+    val type: String, // "image", "video", "web"
+    val url: String,
+    val durationSeconds: Int,
+    val orderInLayout: Int, // Specific to its use in a layout, might be redundant if using CrossRef with order
+    val localPath: String?, // Path to the downloaded file, if applicable
+    val filename: String?,
+    val mimeType: String?,
+    val sizeBytes: Long?,
+    val checksum: String?, // For integrity check of downloaded file
+    val lastAccessed: Long = System.currentTimeMillis() // For cache eviction logic
 )

@@ -1,0 +1,33 @@
+package com.signagepro.app.core.data.local.db
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
+import com.signagepro.app.core.data.local.dao.LayoutDao
+import com.signagepro.app.core.data.local.dao.MediaItemDao
+import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
+import com.signagepro.app.core.data.local.model.LayoutEntity
+import com.signagepro.app.core.data.local.model.LayoutMediaItemCrossRef
+import com.signagepro.app.core.data.local.model.MediaItemEntity
+
+@Database(
+    entities = [
+        DeviceSettingsEntity::class,
+        LayoutEntity::class,
+        MediaItemEntity::class,
+        LayoutMediaItemCrossRef::class
+    ],
+    version = 1, // Start with version 1. Increment on schema changes.
+    exportSchema = true // Recommended to export schema for migrations
+)
+//@TypeConverters(Converters::class) // Add if you have type converters
+abstract class SignageProDatabase : RoomDatabase() {
+
+    abstract fun deviceSettingsDao(): DeviceSettingsDao
+    abstract fun layoutDao(): LayoutDao
+    abstract fun mediaItemDao(): MediaItemDao
+
+    companion object {
+        const val DATABASE_NAME = "signagepro_db"
+    }
+} 
