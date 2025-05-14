@@ -55,6 +55,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.appcompat:appcompat:1.6.1")
     
     // Compose dependencies
     implementation("androidx.compose.ui:ui")
@@ -81,9 +82,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Media Playback
-    implementation("androidx.media3:media3-exoplayer:1.X.X") // Replace X.X with the latest version
-    implementation("androidx.media3:media3-ui:1.X.X")
-    implementation("androidx.media3:media3-common:1.X.X")
+    implementation("androidx.media3:media3-exoplayer:1.6.1")
+    implementation("androidx.media3:media3-ui:1.6.1")
+    implementation("androidx.media3:media3-common:1.6.1")
     
     // QR Code
     implementation("com.google.zxing:core:3.5.2")
