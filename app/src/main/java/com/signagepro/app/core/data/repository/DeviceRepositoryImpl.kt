@@ -124,7 +124,7 @@ class DeviceRepositoryImpl @Inject constructor(
         val dummyStatus = ApplicationStatus(
             deviceId = getDeviceId(),
             isOnline = true, // TODO: Check network status
-            lastHeartbeatTimestamp = sharedPrefsManager.getLastHeartbeatTimestamp(), // Get from prefs
+            lastfHeartbeatTimestamp = sharedPrefsManager.getLastHeartbeatTimestamp(), // Get from prefs
             currentContentId = null, // TODO: Get from player state
             currentPlaylistId = deviceSettingsDao.getDeviceSettingsSnapshot()?.currentLayoutId?.toString(), // Get from settings
             diskSpaceFreeMb = 1024L, // TODO: Get actual disk space

@@ -142,8 +142,3 @@ fun RenderContent(mediaItem: MediaItemEntity) {
         }
     }
 }
-
-@Composable
-fun DisplayScreen(viewModel: DisplayViewModel) {
-    val currentLayout by viewModel.currentLayout.collectAsState()
-    LayoutRenderer(layout = currentLayout)

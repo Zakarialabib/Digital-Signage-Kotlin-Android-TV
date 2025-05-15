@@ -22,6 +22,11 @@ class SharedPrefsManager(context: Context) {
         return prefs.getString(KEY_AUTH_TOKEN, null)
     }
 
+    fun setAuthToken(token: String) {
+        prefs.edit().putString(KEY_AUTH_TOKEN, token).apply()
+    }
+
+
     fun saveDeviceId(deviceId: String) {
         prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
     }
@@ -45,6 +50,11 @@ class SharedPrefsManager(context: Context) {
     fun getLastHeartbeatTimestamp(): Long {
         return prefs.getLong(KEY_LAST_HEARTBEAT_TIMESTAMP, 0L)
     }
+
+    fun setLastHeartbeatTimestamp(timestamp: Long) {
+        prefs.edit().putLong(KEY_LAST_HEARTBEAT_TIMESTAMP, timestamp).apply()
+    }
+
 
     companion object {
         private const val PREFS_NAME = "SignageProPrefs"
