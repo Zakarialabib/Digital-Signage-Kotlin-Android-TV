@@ -15,5 +15,6 @@ data class MediaItemEntity(
     val mimeType: String?,
     val sizeBytes: Long?,
     val checksum: String?, // For integrity check of downloaded file
-    val lastAccessed: Long = System.currentTimeMillis() // For cache eviction logic
+    val displayUrl: String?, // URL to be used for display (remote or local)
+    val lastAccessed: Long = System.currentTimeMillis()
 )
