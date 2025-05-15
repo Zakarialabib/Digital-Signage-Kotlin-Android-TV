@@ -79,6 +79,7 @@ interface LayoutDao {
                 mimeType = it.mimeType,
                 sizeBytes = it.sizeBytes,
                 checksum = it.checksum,
+                displayUrl = it.url,
                 lastAccessed = System.currentTimeMillis()
             )
         }
@@ -93,4 +94,4 @@ interface LayoutDao {
         }
         insertAllLayoutMediaCrossRefs(crossRefs)
     }
-} 
+}

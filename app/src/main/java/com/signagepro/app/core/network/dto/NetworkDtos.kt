@@ -84,7 +84,8 @@ fun MediaItemDto.toEntity(): MediaItemEntity {
         filename = this.filename,
         mimeType = this.mimeType,
         sizeBytes = this.sizeBytes,
-        checksum = this.checksum
+        checksum = this.checksum,
+        displayUrl = this.url
         // lastAccessed will use its default value System.currentTimeMillis()
     )
-} 
+}

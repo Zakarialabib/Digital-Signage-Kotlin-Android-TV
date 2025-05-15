@@ -49,7 +49,7 @@ class FileDownloader @Inject constructor(
             FileOutputStream(outputFile).use { outputStream ->
                 urlConnection.inputStream.use { inputStream ->
                     val buffer = ByteArray(4 * 1024) // 4KB buffer
-                    var bytesRead:
+                    var bytesRead: Int
                     while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                         outputStream.write(buffer, 0, bytesRead)
                     }

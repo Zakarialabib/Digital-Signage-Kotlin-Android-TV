@@ -249,7 +249,7 @@ class ContentRepositoryImpl @Inject constructor(
 
     override suspend fun getMediaItem(mediaItemId: Long): MediaItemEntity? {
         // TODO("Delegate to DAO or implement logic")
-        return mediaItemDao.getMediaItemById(mediaItemId) // Assuming DAO has such a method
+        return mediaItemDao.getMediaItemById(mediaItemId).firstOrNull() // Assuming DAO has such a method
     }
 
     override suspend fun updateMediaItemLocalPath(mediaItemId: Long, localPath: String) {

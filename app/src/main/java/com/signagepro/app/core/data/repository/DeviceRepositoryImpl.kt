@@ -12,6 +12,7 @@ import com.signagepro.app.core.data.model.DeviceInfo
 import com.signagepro.app.core.data.model.HeartbeatRequest
 import com.signagepro.app.core.data.model.HeartbeatResponse
 import com.signagepro.app.core.network.ApiService
+import com.signagepro.app.core.common.SharedPrefsManager
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
 import com.signagepro.app.core.util.CoroutineDispatchers
@@ -124,7 +125,7 @@ class DeviceRepositoryImpl @Inject constructor(
         val dummyStatus = ApplicationStatus(
             deviceId = getDeviceId(),
             isOnline = true, // TODO: Check network status
-            lastHeartbeat = sharedPrefsManager.getLastHeartbeatTimestamp(), // Get from prefs
+            lastHeartbeatTimestamp = sharedPrefsManager.getLastHeartbeatTimestamp(), // Get from prefs
             currentContentId = null, // TODO: Get from player state
             currentPlaylistId = deviceSettingsDao.getDeviceSettingsSnapshot()?.currentLayoutId?.toString(), // Get from settings
             diskSpaceFreeMb = 1024L, // TODO: Get actual disk space
@@ -140,7 +141,7 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun updateApplicationStatus(status: ApplicationStatus): Result<Unit> {
         // This might involve updating parts of DeviceSettingsEntity or SharedPreferences
         // For example, lastHeartbeatTimestamp
-        deviceSettingsDao.updateLastHeartbeatTimestamp(status.lastHeartbeat)
+        deviceSettingsDao.updateLastHeartbeatTimestamp(status.lastHeartbeatTimestamp ?: System.currentTimeMillis())
         // Other fields if necessary
         return Result.Success(Unit)
     }
