@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.signagepro.app.features.display.ui.DisplayScreen
+import com.signagepro.app.features.display.viewmodel.DisplayViewModel
 import com.signagepro.app.features.registration.ui.RegistrationScreen
 import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
 import com.signagepro.app.features.splash.ui.SplashScreen 
@@ -55,7 +56,6 @@ fun AppNavigation(
                     }
                     SplashDestination.Display -> {
                         coroutineScope.launch {
-                            // Fetch the current layout ID from DeviceRepository
                             val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
                             val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                             
@@ -64,8 +64,8 @@ fun AppNavigation(
                             }
                         }
                     }
-                    SplashDestination.Undetermined -> {
-                        // Stay on splash, ViewModel is deciding or hasn't started
+                    else -> {
+                        // Handle Undetermined or unexpected states
                     }
                 }
             }
@@ -73,6 +73,7 @@ fun AppNavigation(
 
         composable(Screen.Registration.route) { backStackEntry ->
             val registrationViewModel = hiltViewModel<RegistrationViewModel>()
+            val registrationCoroutineScope = rememberCoroutineScope()
             
             RegistrationScreen(
                 viewModel = registrationViewModel,
@@ -95,8 +96,12 @@ fun AppNavigation(
             route = Screen.Display.route,
             arguments = listOf(navArgument("layoutId") { type = NavType.StringType })
         ) { backStackEntry ->
-            // DisplayViewModel will get layoutId from SavedStateHandle
-            DisplayScreen()
+            val layoutId = backStackEntry.arguments?.getString("layoutId") ?: "default_layout"
+            val displayViewModel: DisplayViewModel = hiltViewModel()
+            LaunchedEffect(displayViewModel) {
+                displayViewModel.setLayoutId(layoutId)
+            }
+            DisplayScreen(viewModel = displayViewModel)
         }
     }
-} 
+}

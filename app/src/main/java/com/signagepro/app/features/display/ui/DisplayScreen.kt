@@ -19,6 +19,7 @@ import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.features.display.renderers.ImageRenderer
 import com.signagepro.app.features.display.renderers.VideoRenderer
 import com.signagepro.app.features.display.renderers.WebRenderer
+import com.signagepro.app.features.display.renderers.LayoutRenderer
 import com.signagepro.app.features.display.viewmodel.DisplayUiState
 import com.signagepro.app.features.display.viewmodel.DisplayViewModel
 
@@ -141,3 +142,8 @@ fun RenderContent(mediaItem: MediaItemEntity) {
         }
     }
 }
+
+@Composable
+fun DisplayScreen(viewModel: DisplayViewModel) {
+    val currentLayout by viewModel.currentLayout.collectAsState()
+    LayoutRenderer(layout = currentLayout)

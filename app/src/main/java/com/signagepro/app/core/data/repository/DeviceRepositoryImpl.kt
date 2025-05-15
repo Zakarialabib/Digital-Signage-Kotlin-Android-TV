@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import com.signagepro.app.BuildConfig
-import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.data.local.SharedPrefsManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.model.ApplicationStatus
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
@@ -12,7 +12,6 @@ import com.signagepro.app.core.data.model.DeviceInfo
 import com.signagepro.app.core.data.model.HeartbeatRequest
 import com.signagepro.app.core.data.model.HeartbeatResponse
 import com.signagepro.app.core.network.ApiService
-import com.signagepro.app.core.common.SharedPrefsManager
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
 import com.signagepro.app.core.util.CoroutineDispatchers
@@ -32,7 +31,7 @@ class DeviceRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val apiService: ApiService,
     private val deviceSettingsDao: DeviceSettingsDao,
-    private val sharedPrefsManager: SharedPreferencesManager,
+    private val sharedPrefsManager: SharedPrefsManager,
     private val dispatchers: CoroutineDispatchers
 ) : DeviceRepository {
 
@@ -81,11 +80,11 @@ class DeviceRepositoryImpl @Inject constructor(
     }
 
     override fun getDeviceApiKey(): Flow<String?> {
-        return sharedPrefsManager.getAuthTokenFlow() // Assuming SharedPreferencesManager has this
+        return sharedPrefsManager.getAuthTokenFlow() 
     }
 
     override suspend fun saveDeviceApiKey(apiKey: String) {
-        sharedPrefsManager.saveAuthToken(apiKey) // Assuming SharedPreferencesManager has this
+        sharedPrefsManager.saveAuthToken(apiKey) 
     }
 
     override fun getDeviceId(): String {
