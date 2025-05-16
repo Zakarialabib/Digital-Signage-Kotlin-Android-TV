@@ -63,4 +63,4 @@ class BootReceiver : BroadcastReceiver() {
             Logger.i("BootReceiver: ContentSyncWorker and HeartbeatWorker enqueued.")
         }
     }
-}
+} 

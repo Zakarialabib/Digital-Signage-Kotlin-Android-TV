@@ -1,4 +1,4 @@
-package com.signagepro.app.core.util
+package com.signagepro.app.core.utils
 
 import kotlinx.coroutines.CoroutineDispatcher
 

@@ -39,4 +39,4 @@ fun SignageProTVTheme(
         typography = Typography,
         content = content
     )
-}
+} 

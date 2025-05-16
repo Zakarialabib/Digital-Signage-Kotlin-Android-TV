@@ -5,7 +5,7 @@ import com.signagepro.app.core.data.local.dao.MediaItemDao
 import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.network.ApiService
-import com.signagepro.app.core.util.CoroutineDispatchers
+import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.utils.Result
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -15,6 +15,9 @@ import kotlinx.coroutines.withContext
 import java.io.File // For potential cache clearing
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.signagepro.app.core.data.model.Content
+import com.signagepro.app.core.data.model.Layout
+import com.signagepro.app.core.common.Resource
 
 interface ContentRepository {
     /**

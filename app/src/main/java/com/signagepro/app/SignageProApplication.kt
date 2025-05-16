@@ -27,4 +27,4 @@ class SignageProApplication : Application() {
         // Note: Remember to declare this Application class in AndroidManifest.xml
         // using android:name=".SignageProApplication"
     }
-}
+} 

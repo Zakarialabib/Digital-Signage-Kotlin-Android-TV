@@ -14,7 +14,7 @@ import com.signagepro.app.core.data.model.HeartbeatResponse
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
-import com.signagepro.app.core.util.CoroutineDispatchers
+import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow

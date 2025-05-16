@@ -1,4 +1,4 @@
-package com.signagepro.app.core.util
+package com.signagepro.app.core.utils
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -87,4 +87,4 @@ class NetworkConnectivityObserverImpl @Inject constructor(
             NetworkConnectivityObserver.Status.Unavailable
         }
     }
-}
+} 

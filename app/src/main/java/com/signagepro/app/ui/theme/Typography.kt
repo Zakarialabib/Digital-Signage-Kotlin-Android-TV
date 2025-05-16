@@ -80,4 +80,4 @@ val Typography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp
     )
-)
+) 

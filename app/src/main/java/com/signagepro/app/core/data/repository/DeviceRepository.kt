@@ -14,8 +14,10 @@ import com.signagepro.app.core.data.model.HeartbeatResponse // Added import
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse // Added import (DTO version)
-import com.signagepro.app.core.util.CoroutineDispatchers
-import com.signagepro.app.core.utils.Result
+import com.signagepro.app.core.data.model.DeviceSettings
+import com.signagepro.app.core.model.DeviceRegistration
+import com.signagepro.app.core.utils.CoroutineDispatchers // Changed from .util
+import com.signagepro.app.core.common.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
