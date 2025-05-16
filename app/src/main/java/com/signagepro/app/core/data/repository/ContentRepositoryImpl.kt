@@ -11,6 +11,8 @@ import com.signagepro.app.core.network.dto.LayoutDto
 import com.signagepro.app.core.network.dto.toEntity
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
+import com.signagepro.app.core.data.model.Content
+import com.signagepro.app.core.data.model.Content.Playlist
 import com.signagepro.app.features.display.manager.CacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -35,27 +37,27 @@ class ContentRepositoryImpl @Inject constructor(
      * Fetches layout and associated media items from the API, saves them to the database,
      * and initiates download/caching of media files
      */
-    override suspend fun fetchAndCacheLayout(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
+    override suspend fun fetchAndCacheLayout(layoutId: String): com.signagepro.app.core.utils.Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
         try {
             Logger.d("ContentRepository: Fetching layout $layoutId from API")
 
             val layoutIdL = layoutId.toLongOrNull()
-                ?: return@withContext Result.Error(IllegalArgumentException("Invalid layout ID format: $layoutId"))
+                ?: return@withContext com.signagepro.app.core.utils.Result.Error(IllegalArgumentException("Invalid layout ID format: $layoutId"))
 
             val retrofitResponse = apiService.getDeviceLayout(layoutId) // getDeviceLayout now takes String ID as per ApiService
             
             if (!retrofitResponse.isSuccessful) {
-                return@withContext Result.Error(Exception("API Error HTTP ${retrofitResponse.code()}: ${retrofitResponse.message()}"))
+                return@withContext com.signagepro.app.core.utils.Result.Error(Exception("API Error HTTP ${retrofitResponse.code()}: ${retrofitResponse.message()}"))
             }
 
             val apiResponseBody = retrofitResponse.body()
             if (apiResponseBody == null) {
-                return@withContext Result.Error(Exception("API Error: Empty response body"))
+                return@withContext com.signagepro.app.core.utils.Result.Error(Exception("API Error: Empty response body"))
             }
             
             // Assuming "success" is the status string for a successful business logic operation
             if (apiResponseBody.status != "success" || apiResponseBody.data == null) { 
-                return@withContext Result.Error(Exception("API Logic Error: ${apiResponseBody.message ?: "Fetched layout data is null or status not success"}"))
+                return@withContext com.signagepro.app.core.utils.Result.Error(Exception("API Logic Error: ${apiResponseBody.message ?: "Fetched layout data is null or status not success"}"))
             }
 
             val layoutDto = apiResponseBody.data
@@ -66,17 +68,17 @@ class ContentRepositoryImpl @Inject constructor(
             val savedLayout: LayoutWithMediaItems? = layoutDao.getLayoutWithMediaItems(layoutIdL).firstOrNull()
 
             if (savedLayout == null) {
-                return@withContext Result.Error(Exception("Failed to retrieve saved layout $layoutIdL from database after saving"))
+                return@withContext com.signagepro.app.core.utils.Result.Error(Exception("Failed to retrieve saved layout $layoutIdL from database after saving"))
             }
             
             Logger.d("ContentRepository: Layout $layoutIdL retrieved from DB with ${savedLayout.mediaItems.size} media items")
 
             cacheMediaFiles(savedLayout.mediaItems)
 
-            return@withContext Result.Success(savedLayout)
+            return@withContext com.signagepro.app.core.utils.Result.Success(savedLayout)
         } catch (e: Exception) {
             Logger.e(e, "ContentRepository: Error fetching and caching layout $layoutId")
-            return@withContext Result.Error(e)
+            return@withContext com.signagepro.app.core.utils.Result.Error(e)
         }
     }
     
@@ -92,14 +94,14 @@ class ContentRepositoryImpl @Inject constructor(
                     val cacheResult = cacheManager.ensureContentIsCached(mediaItem).firstOrNull()
                     
                     when (cacheResult) {
-                        is Result.Success -> {
+                        is com.signagepro.app.core.utils.Result.Success -> {
                             val file = cacheResult.data
                             // Update the localPath in database with just the filename
                             // (since renderers expect just the filename within media_cache dir)
                             mediaItemDao.updateLocalPath(mediaItem.id, file.name)
                             Logger.i("ContentRepository: Media item ${mediaItem.id} cached successfully at ${file.name}")
                         }
-                        is Result.Error -> {
+                        is com.signagepro.app.core.utils.Result.Error -> {
                             Logger.w("ContentRepository: Failed to cache media item ${mediaItem.id}: ${cacheResult.exception?.message}")
                             // We don't throw here as we want to continue with other items
                         }
@@ -118,34 +120,34 @@ class ContentRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun getCachedLayoutWithMediaItems(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
+    override suspend fun getCachedLayoutWithMediaItems(layoutId: String): com.signagepro.app.core.utils.Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
         try {
             val layoutIdL = layoutId.toLongOrNull()
-                ?: return@withContext Result.Error(IllegalArgumentException("Invalid layout ID format: $layoutId"))
+                ?: return@withContext com.signagepro.app.core.utils.Result.Error(IllegalArgumentException("Invalid layout ID format: $layoutId"))
 
             val layoutFlow: Flow<LayoutWithMediaItems?> = layoutDao.getLayoutWithMediaItems(layoutIdL)
             val layout: LayoutWithMediaItems? = layoutFlow.firstOrNull()
             
             if (layout != null) {
                 Logger.d("ContentRepository: Retrieved cached layout $layoutIdL with ${layout.mediaItems.size} media items")
-                return@withContext Result.Success(layout)
+                return@withContext com.signagepro.app.core.utils.Result.Success(layout)
             } else {
                 Logger.w("ContentRepository: No cached layout found for ID $layoutIdL")
-                return@withContext Result.Error(Exception("Layout $layoutIdL not found in cache"))
+                return@withContext com.signagepro.app.core.utils.Result.Error(Exception("Layout $layoutIdL not found in cache"))
             }
         } catch (e: Exception) {
             Logger.e(e, "ContentRepository: Error retrieving cached layout $layoutId")
-            return@withContext Result.Error(e)
+            return@withContext com.signagepro.app.core.utils.Result.Error(e)
         }
     }
     
-    override suspend fun refreshContentIfNeeded(layoutId: String, forceRefresh: Boolean, maxAgeMinutes: Int): Result<LayoutWithMediaItems> {
+    override suspend fun refreshContentIfNeeded(layoutId: String, forceRefresh: Boolean, maxAgeMinutes: Int): com.signagepro.app.core.utils.Result<LayoutWithMediaItems> {
         try {
             // First try to get from cache
             val cachedResult = getCachedLayoutWithMediaItems(layoutId)
             
             // If cache has valid data and we're not forcing a refresh, use it
-            if (cachedResult is Result.Success && !forceRefresh) {
+            if (cachedResult is com.signagepro.app.core.utils.Result.Success && !forceRefresh) {
                 val cachedLayout = cachedResult.data
                 val now = Date()
                 val layoutAge = (now.time - cachedLayout.layout.lastSyncTimestamp) / (60 * 1000L)
@@ -163,11 +165,11 @@ class ContentRepositoryImpl @Inject constructor(
             Logger.e(e, "ContentRepository: Error in refreshContentIfNeeded for layout $layoutId")
             // If there was an error refreshing, fall back to whatever is in cache
             val cachedResult = getCachedLayoutWithMediaItems(layoutId)
-            return if (cachedResult is Result.Success) {
+            return if (cachedResult is com.signagepro.app.core.utils.Result.Success) {
                 Logger.w("ContentRepository: Refresh failed, falling back to cached content")
                 cachedResult
             } else {
-                Result.Error(e)
+                com.signagepro.app.core.utils.Result.Error(e)
             }
         }
     }
@@ -207,7 +209,7 @@ class ContentRepositoryImpl @Inject constructor(
     }
 
     // Stubs for missing interface methods
-    override fun getPlaylist(playlistId: String): Flow<Result<Playlist>> {
+    override fun getPlaylist(playlistId: String): Flow<com.signagepro.app.core.utils.Result<Playlist>> {
         // Using placeholder Playlist from com.signagepro.app.core.data.repository package
         // TODO("Implement actual logic to fetch from remote/local or use a proper model")
         val dummyImage = Content.Image("img1", "http://example.com/image.png", duration = 10)
@@ -217,24 +219,24 @@ class ContentRepositoryImpl @Inject constructor(
             items = listOf(dummyImage, dummyVideo),
             duration = 0 // Calculated from items
         )
-        return flow { emit(Result.Success(dummyPlaylist)) }
+        return flow { emit(com.signagepro.app.core.utils.Result.Success(dummyPlaylist)) }
     }
 
-    override fun getContentItem(contentId: String): Flow<Result<Content>> {
+    override fun getContentItem(contentId: String): Flow<com.signagepro.app.core.utils.Result<Content>> {
         // Using placeholder Content from com.signagepro.app.core.data.repository package
         // TODO("Implement actual logic or use a proper model")
         val dummyContent = Content.Image(contentId, "http://example.com/image.png", duration = 10)
-        return flow { emit(Result.Success(dummyContent)) }
+        return flow { emit(com.signagepro.app.core.utils.Result.Success(dummyContent)) }
     }
 
-    override suspend fun preloadPlaylistContent(playlist: Playlist): Result<Unit> {
+    override suspend fun preloadPlaylistContent(playlist: Playlist): com.signagepro.app.core.utils.Result<Unit> {
         // TODO("Implement preloading logic (e.g., download files)")
-        return Result.Success(Unit)
+        return com.signagepro.app.core.utils.Result.Success(Unit)
     }
 
-    override suspend fun clearContentCache(): Result<Unit> {
+    override suspend fun clearContentCache(): com.signagepro.app.core.utils.Result<Unit> {
         // TODO("Implement cache clearing logic")
-        return Result.Success(Unit)
+        return com.signagepro.app.core.utils.Result.Success(Unit)
     }
 
     override fun getOrderedMediaItemsForLayout(layoutId: Long): Flow<List<MediaItemEntity>> {
@@ -259,12 +261,12 @@ class ContentRepositoryImpl @Inject constructor(
 
     override suspend fun updateMediaItemLastAccessed(mediaItemId: Long) {
         // TODO("Delegate to DAO or implement logic")
-        mediaItemDao.updateLastAccessed(mediaItemId) // Assuming DAO has such a method
+        mediaItemDao.updateLastAccessed(mediaItemId, System.currentTimeMillis()) // Assuming DAO has such a method
     }
 
     override suspend fun getItemsForCacheEviction(): List<MediaItemEntity> {
         // TODO("Delegate to DAO or implement logic")
-        return mediaItemDao.getItemsForCacheEviction() // Assuming DAO has such a method
+        return mediaItemDao.getAllMediaItemsSortedByAccess() // Assuming DAO has such a method
     }
 
     override suspend fun deleteMediaItemsFromCache(items: List<MediaItemEntity>, cacheDir: File) {

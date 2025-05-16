@@ -5,6 +5,9 @@ import com.signagepro.app.core.data.local.dao.MediaItemDao
 import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.network.ApiService
+import com.signagepro.app.core.data.model.Content
+import com.signagepro.app.core.data.model.Content.Playlist
+import com.signagepro.app.core.model.Layout
 import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.utils.Result
 import kotlinx.coroutines.flow.Flow
@@ -15,43 +18,40 @@ import kotlinx.coroutines.withContext
 import java.io.File // For potential cache clearing
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.signagepro.app.core.data.model.Content
-import com.signagepro.app.core.data.model.Layout
-import com.signagepro.app.core.common.Resource
 
 interface ContentRepository {
     /**
      * Fetches a playlist by its ID.
      * This might involve fetching from a remote source or local cache.
      */
-    fun getPlaylist(playlistId: String): Flow<Result<Playlist>>
+    fun getPlaylist(playlistId: String): Flow<com.signagepro.app.core.utils.Result<Playlist>>
 
     /**
      * Fetches a specific content item by its ID.
      * Useful if individual content items can be addressed directly.
      */
-    fun getContentItem(contentId: String): Flow<Result<Content>>
+    fun getContentItem(contentId: String): Flow<com.signagepro.app.core.utils.Result<Content>>
 
     /**
      * Preloads content items for a given playlist to ensure smooth playback.
      * This could involve downloading media files to local storage.
      */
-    suspend fun preloadPlaylistContent(playlist: Playlist): Result<Unit>
+    suspend fun preloadPlaylistContent(playlist: Playlist): com.signagepro.app.core.utils.Result<Unit>
 
     /**
      * Clears any cached or preloaded content.
      */
-    suspend fun clearContentCache(): Result<Unit>
+    suspend fun clearContentCache(): com.signagepro.app.core.utils.Result<Unit>
 
     /**
      * Fetches layout with media items from the API and caches them locally
      */
-    suspend fun fetchAndCacheLayout(layoutId: String): Result<LayoutWithMediaItems>
+    suspend fun fetchAndCacheLayout(layoutId: String): com.signagepro.app.core.utils.Result<LayoutWithMediaItems>
     
     /**
      * Retrieves a cached layout with its media items from the local database
      */
-    suspend fun getCachedLayoutWithMediaItems(layoutId: String): Result<LayoutWithMediaItems>
+    suspend fun getCachedLayoutWithMediaItems(layoutId: String): com.signagepro.app.core.utils.Result<LayoutWithMediaItems>
     
     /**
      * Refreshes content if needed based on age or force refresh flag
@@ -59,7 +59,7 @@ interface ContentRepository {
      * @param forceRefresh If true, always refresh regardless of cache age
      * @param maxAgeMinutes Maximum age of cached content in minutes before forcing refresh
      */
-    suspend fun refreshContentIfNeeded(layoutId: String, forceRefresh: Boolean = false, maxAgeMinutes: Int = 60): Result<LayoutWithMediaItems>
+    suspend fun refreshContentIfNeeded(layoutId: String, forceRefresh: Boolean = false, maxAgeMinutes: Int = 60): com.signagepro.app.core.utils.Result<LayoutWithMediaItems>
     
     /**
      * Cleans up unused media files from cache
@@ -73,14 +73,6 @@ interface ContentRepository {
     suspend fun updateMediaItemLastAccessed(mediaItemId: Long)
     suspend fun getItemsForCacheEviction(): List<MediaItemEntity>
     suspend fun deleteMediaItemsFromCache(items: List<MediaItemEntity>, cacheDir: File)
-}
-
-// TODO: Define these data classes or import them if they exist elsewhere
-data class Playlist(val id: String, val items: List<Content>, val duration: Int)
-sealed class Content {
-    data class Image(val id: String, val url: String, val duration: Int) : Content()
-    data class Video(val id: String, val url: String, val duration: Int) : Content()
-    data class Web(val id: String, val url: String, val duration: Int) : Content()
 }
 
 // ContentRepositoryImpl class removed from this file to resolve redeclaration error.

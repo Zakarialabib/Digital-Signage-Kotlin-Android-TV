@@ -1,5 +1,6 @@
 package com.signagepro.app.core.data.repository
 
+import com.signagepro.app.core.data.local.dao.PlaylistDao
 import com.signagepro.app.core.data.local.model.LayoutEntity
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.data.local.model.PlaylistEntity
@@ -16,6 +17,7 @@ import javax.inject.Singleton
 
 @Singleton
 class PlaylistRepositoryImpl @Inject constructor(
+    private val playlistDao: PlaylistDao,
     private val dispatchers: CoroutineDispatchers
 ) : PlaylistRepository {
 
