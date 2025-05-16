@@ -3,6 +3,7 @@ package com.signagepro.app.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.work.WorkManager
+import com.signagepro.app.core.data.local.SharedPrefsManager
 import com.signagepro.app.core.util.CoroutineDispatchers
 import com.signagepro.app.core.utils.Constants
 import com.signagepro.app.core.utils.NetworkMonitor
@@ -57,5 +58,11 @@ object AppModule {
         okHttpClient: okhttp3.OkHttpClient
     ): CacheManager {
         return ContentCacheManager(context, okHttpClient)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideSharedPrefsManager(@ApplicationContext context: Context): SharedPrefsManager {
+        return SharedPrefsManager(context)
     }
 } 
