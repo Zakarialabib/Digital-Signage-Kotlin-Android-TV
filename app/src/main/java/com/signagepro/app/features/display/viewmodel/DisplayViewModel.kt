@@ -180,33 +180,37 @@ class DisplayViewModel @Inject constructor(
                 return@launch
             }
 
-            contentRepository.getPlaylist(targetPlaylistId)
-                .catch { e -> 
-                    _uiState.value = DisplayUiState.Error("Failed to load playlist: ${e.message}")
-                }
-                .collectLatest { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            val playlist = result.data
-                            currentPlaylist = playlist
-                            if (playlist.items.isEmpty()) {
-                                _uiState.value = DisplayUiState.EmptyPlaylist
-                            } else {
-                                // TODO: Preloading content might need to be more sophisticated
-                                // and its result handled, or done in PlaylistManager.
-                                // For now, assuming it's a fire-and-forget helper.
-                                viewModelScope.launch { contentRepository.preloadPlaylistContent(playlist) }
-                                startContentCycle() // This should now probably use playlistManager
+            try {
+                contentRepository.getPlaylist(targetPlaylistId)
+                    .catch { e -> 
+                        _uiState.value = DisplayUiState.Error("Failed to load playlist: ${e.message}")
+                    }
+                    .collect { result ->
+                        when (result) {
+                            is Result.Success -> {
+                                val playlist = result.data
+                                currentPlaylist = playlist
+                                if (playlist.items.isEmpty()) {
+                                    _uiState.value = DisplayUiState.EmptyPlaylist
+                                } else {
+                                    // Preload content in a separate coroutine
+                                    viewModelScope.launch { 
+                                        contentRepository.preloadPlaylistContent(playlist) 
+                                    }
+                                    startContentCycle()
+                                }
+                            }
+                            is Result.Error -> {
+                                _uiState.value = DisplayUiState.Error("Failed to load playlist: ${result.exception.message}")
+                            }
+                            is Result.Loading -> {
+                                _uiState.value = DisplayUiState.Loading
                             }
                         }
-                        is Result.Error -> {
-                            _uiState.value = DisplayUiState.Error("Failed to load playlist: ${result.exception.message}")
-                        }
-                        is Result.Loading -> {
-                            _uiState.value = DisplayUiState.Loading // Or handle as per UI needs
-                        }
                     }
-                }
+            } catch (e: Exception) {
+                _uiState.value = DisplayUiState.Error("Failed to load playlist: ${e.message}")
+            }
         }
     }
 
@@ -286,6 +290,10 @@ class DisplayViewModel @Inject constructor(
 
     fun skipToNextItem() {
         playlistManager.skipToNextItem()
+    }
+
+    fun setLayoutId(layoutId: String) {
+        _layoutId.value = layoutId
     }
 
     override fun onCleared() {

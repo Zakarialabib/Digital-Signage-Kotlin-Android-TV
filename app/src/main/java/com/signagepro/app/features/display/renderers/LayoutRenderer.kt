@@ -18,7 +18,7 @@ fun LayoutRenderer(
     layout: LayoutEntity,
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
-    Timber.d("Rendering layout: ${layout.layout.name}")
+    Timber.d("Rendering layout: ${layout.name}")
     
     // This is a placeholder implementation that will need to be expanded
     // to properly render complex layouts with multiple zones

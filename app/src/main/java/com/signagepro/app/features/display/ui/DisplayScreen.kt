@@ -91,6 +91,24 @@ fun DisplayScreen(
                     )
                 }
             }
+            is DisplayUiState.EmptyPlaylist -> {
+                Text(
+                    text = "The playlist is empty. Please add content to display.",
+                    color = Color.Yellow,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
+                )
+            }
+            is DisplayUiState.NoPlaylistAssigned -> {
+                Text(
+                    text = "No playlist has been assigned to this device.",
+                    color = Color.Yellow,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
+                )
+            }
         }
         
         // Display PlaylistManager errors if any (overlay at bottom)

@@ -157,7 +157,7 @@ fun DeviceInfoScreen(
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
+private fun InfoRow(label: String, value: String?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,7 +170,7 @@ private fun InfoRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = value,
+            text = value ?: "Not available",
             style = MaterialTheme.typography.bodyMedium
         )
     }

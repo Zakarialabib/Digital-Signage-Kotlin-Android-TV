@@ -64,13 +64,11 @@ fun AppNavigation(
                         }
                     }
                     SplashDestination.Display -> {
-                        coroutineScope.launch {
-                            val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
-                            val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
-                            
-                            navController.navigate(Screen.Display.createRoute(currentLayoutId)) {
-                                popUpTo(Screen.Splash.route) { inclusive = true }
-                            }
+                        val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
+                        val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
+                        
+                        navController.navigate(Screen.Display.createRoute(currentLayoutId)) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     }
                     else -> {
@@ -87,7 +85,8 @@ fun AppNavigation(
             RegistrationScreen(
                 viewModel = registrationViewModel,
                 onRegistrationSuccess = {
-                    coroutineScope.launch {
+                    val coroutineScope = rememberCoroutineScope()
+                    LaunchedEffect(Unit) {
                         val deviceSettings = registrationViewModel.deviceRepository.getDeviceSettings().firstOrNull()
                         val assignedLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                         
@@ -105,7 +104,7 @@ fun AppNavigation(
         ) { backStackEntry ->
             val layoutId = backStackEntry.arguments?.getString("layoutId") ?: "default_layout"
             val displayViewModel: DisplayViewModel = hiltViewModel()
-            LaunchedEffect(displayViewModel) {
+            LaunchedEffect(layoutId) {
                 displayViewModel.setLayoutId(layoutId)
             }
             DisplayScreen(viewModel = displayViewModel)
