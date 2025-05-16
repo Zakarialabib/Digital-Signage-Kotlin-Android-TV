@@ -9,6 +9,20 @@ plugins {
     // id("com.google.firebase.crashlytics") version "2.9.9" apply false
 }
 
-tasks.register("clean", Delete::class) {
+// Use the Kotlin DSL syntax
+tasks.register<Delete>("clean") {
     delete(rootProject.buildDir)
+}
+
+// Set common properties for all modules
+subprojects {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = JavaVersion.VERSION_17.toString()
+            freeCompilerArgs = freeCompilerArgs + listOf(
+                "-Xjsr305=strict",
+                "-opt-in=kotlin.RequiresOptIn"
+            )
+        }
+    }
 }
