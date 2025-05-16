@@ -261,14 +261,22 @@ class DisplayViewModel @Inject constructor(
     private fun reportCurrentContent(content: Content) {
         viewModelScope.launch {
             try {
-                val currentStatus = deviceRepository.getApplicationStatus().firstOrNull()?.getOrNull()
-                currentStatus?.let {
-                    val updatedStatus = it.copy(currentContentId = content.id, currentPlaylistId = currentPlaylist?.id)
-                    deviceRepository.updateApplicationStatus(updatedStatus)
+                // Safely collect the first (or null) status and update application status
+                deviceRepository.getApplicationStatus().collect { statusResult ->
+                    if (statusResult is Result.Success) {
+                        val currentStatus = statusResult.data
+                        val updatedStatus = currentStatus.copy(
+                            currentContentId = content.id,
+                            currentPlaylistId = currentPlaylist?.id
+                        )
+                        deviceRepository.updateApplicationStatus(updatedStatus)
+                    }
+                    // Only collect the first result then complete
+                    return@collect
                 }
             } catch (e: Exception) {
                 // Log error, but don't necessarily disrupt UI
-                println("Failed to report current content: ${e.message}")
+                Logger.e("Failed to report current content: ${e.message}")
             }
         }
     }

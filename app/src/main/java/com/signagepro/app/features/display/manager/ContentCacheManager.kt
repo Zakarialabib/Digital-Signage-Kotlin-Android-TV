@@ -69,21 +69,21 @@ class ContentCacheManager @Inject constructor(
 
             Logger.i("ContentCacheManager: Downloading ${mediaItem.url} to ${targetFile.name}")
             val request = Request.Builder().url(mediaItem.url).build()
-            okHttpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IOException("Failed to download ${mediaItem.url}: ${response.code} ${response.message}")
+            val response = okHttpClient.newCall(request).execute()
+            
+            if (!response.isSuccessful) throw IOException("Failed to download ${mediaItem.url}: ${response.code} ${response.message}")
 
-                response.body?.let { body ->
-                    FileOutputStream(targetFile).use { fileOutputStream ->
-                        fileOutputStream.sink().use { sink ->
-                            body.source().use { source ->
-                                source.readAll(sink)
-                            }
+            response.body?.let { body ->
+                FileOutputStream(targetFile).use { fileOutputStream ->
+                    fileOutputStream.sink().use { sink ->
+                        body.source().use { source ->
+                            source.readAll(sink)
                         }
                     }
-                    Logger.i("ContentCacheManager: Downloaded ${targetFile.name} successfully.")
-                    emit(Result.Success(targetFile))
-                } ?: throw IOException("Response body was null for ${mediaItem.url}")
-            }
+                }
+                Logger.i("ContentCacheManager: Downloaded ${targetFile.name} successfully.")
+                emit(Result.Success(targetFile))
+            } ?: throw IOException("Response body was null for ${mediaItem.url}")
         } catch (e: Exception) {
             Logger.e(e, "ContentCacheManager: Error caching content for ${mediaItem.url}")
             emit(Result.Error(e))

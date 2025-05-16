@@ -80,19 +80,14 @@ fun AppNavigation(
 
         composable(Screen.Registration.route) {
             val registrationViewModel = hiltViewModel<RegistrationViewModel>()
-            val registrationCoroutineScope = rememberCoroutineScope()
             
             RegistrationScreen(
                 viewModel = registrationViewModel,
-                onRegistrationSuccess = {
-                    val coroutineScope = rememberCoroutineScope()
-                    LaunchedEffect(Unit) {
-                        val deviceSettings = registrationViewModel.deviceRepository.getDeviceSettings().firstOrNull()
-                        val assignedLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
-                        
-                        navController.navigate(Screen.Display.createRoute(assignedLayoutId)) {
-                            popUpTo(Screen.Registration.route) { inclusive = true }
-                        }
+                onRegistrationSuccess = { 
+                    // This is a callback that will be invoked by the Registration screen
+                    // when registration is successful. We'll navigate from here.
+                    navController.navigate(Screen.Display.createRoute("default_layout")) {
+                        popUpTo(Screen.Registration.route) { inclusive = true }
                     }
                 }
             )
