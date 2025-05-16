@@ -37,6 +37,9 @@ import com.signagepro.app.features.network.viewmodel.NetworkSettingsViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
+// Helper function to create display route
+private fun createDisplayRoute(layoutId: String): String = "display/$layoutId"
+
 @Composable
 fun AppNavigation(
     modifier: Modifier = Modifier,
@@ -67,7 +70,7 @@ fun AppNavigation(
                         val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
                         val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                         
-                        navController.navigate(Screen.Display.createRoute(currentLayoutId)) {
+                        navController.navigate(createDisplayRoute(currentLayoutId)) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     }
@@ -86,7 +89,7 @@ fun AppNavigation(
                 onRegistrationSuccess = { 
                     // This is a callback that will be invoked by the Registration screen
                     // when registration is successful. We'll navigate from here.
-                    navController.navigate(Screen.Display.createRoute("default_layout")) {
+                    navController.navigate(createDisplayRoute("default_layout")) {
                         popUpTo(Screen.Registration.route) { inclusive = true }
                     }
                 }

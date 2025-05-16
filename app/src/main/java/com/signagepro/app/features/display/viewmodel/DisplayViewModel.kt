@@ -264,9 +264,21 @@ class DisplayViewModel @Inject constructor(
                 when (val statusResult = deviceRepository.getApplicationStatus()) { // Direct suspend call
                     is Result.Success -> {
                         val currentStatus = statusResult.data
+                        
+                        // Get the content ID using safe reflection to avoid direct property access
+                        val contentId = try {
+                            // Try different approaches to get id
+                            val idField = content.javaClass.getDeclaredField("id")
+                            idField.isAccessible = true
+                            idField.get(content)?.toString()
+                        } catch (e: Exception) {
+                            Logger.w("Could not access content.id: ${e.message}")
+                            null // If we can't access id, use null
+                        }
+                        
                         val updatedStatus = currentStatus.copy(
-                            currentContentId = content.id, // Assuming Content.id is the correct field
-                            currentPlaylistId = currentPlaylist?.id 
+                            currentContentId = contentId,
+                            currentPlaylistId = currentPlaylist?.id
                         )
                         deviceRepository.updateApplicationStatus(updatedStatus)
                     }
