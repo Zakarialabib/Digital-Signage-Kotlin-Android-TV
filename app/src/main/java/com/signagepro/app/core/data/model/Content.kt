@@ -2,6 +2,43 @@ package com.signagepro.app.core.data.model
 
 import kotlinx.serialization.Serializable
 
+/**
+ * Domain model representing content that can be displayed in the player.
+ */
+@Serializable
+data class Content(
+    val id: String,
+    val name: String,
+    val description: String? = null,
+    val type: ContentType,
+    val url: String? = null,
+    val localPath: String? = null,
+    val duration: Int = 10, // Duration in seconds
+    val aspectRatio: Float? = null,
+    val metadata: Map<String, String> = emptyMap(),
+    val cacheStatus: CacheStatus = CacheStatus.NOT_CACHED,
+    val lastAccessed: Long = System.currentTimeMillis()
+)
+
+@Serializable
+enum class ContentType {
+    IMAGE,
+    VIDEO,
+    AUDIO,
+    WEB,
+    TEXT,
+    LIVE_STREAM,
+    UNKNOWN
+}
+
+@Serializable
+enum class CacheStatus {
+    NOT_CACHED,
+    CACHING,
+    CACHED,
+    ERROR
+}
+
 @Serializable
 sealed class Content {
     abstract val id: String
@@ -68,16 +105,6 @@ sealed class Content {
     ) : Content() {
         override val type: ContentType = ContentType.PLAYLIST
     }
-}
-
-@Serializable
-enum class ContentType {
-    IMAGE,
-    VIDEO,
-    HTML,
-    CAROUSEL,
-    WEBPAGE,
-    PLAYLIST
 }
 
 @Serializable

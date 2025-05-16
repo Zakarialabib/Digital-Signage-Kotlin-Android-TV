@@ -47,6 +47,12 @@ interface MediaItemDao {
     suspend fun getItemsForCacheEviction(): List<MediaItemEntity>
 
     /**
+     * Get all media items sorted by last access time (most recent first)
+     */
+    @Query("SELECT * FROM media_items ORDER BY lastAccessed DESC")
+    suspend fun getAllMediaItemsSortedByAccess(): List<MediaItemEntity>
+
+    /**
      * Updates the local path for a media item
      */
     @Query("UPDATE media_items SET localPath = :localPath WHERE id = :id")

@@ -8,7 +8,7 @@ import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.data.repository.ContentRepository
 import com.signagepro.app.core.data.repository.DeviceRepository
 import com.signagepro.app.core.data.repository.Playlist
-import com.signagepro.app.core.data.repository.Content
+import com.signagepro.app.core.data.model.Content
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.features.display.manager.PlaylistManager
@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class DisplayUiState {
@@ -136,7 +136,7 @@ class DisplayViewModel @Inject constructor(
         viewModelScope.launch {
             // Periodically refresh content (every 15 minutes)
             while (true) {
-                kotlinx.coroutines.delay(15 * 60 * 1000) // 15 minutes
+                delay(15 * 60 * 1000) // 15 minutes
                 
                 try {
                     Logger.d("DisplayViewModel: Periodic content refresh for layout $layoutId")
@@ -185,7 +185,7 @@ class DisplayViewModel @Inject constructor(
                     .catch { e -> 
                         _uiState.value = DisplayUiState.Error("Failed to load playlist: ${e.message}")
                     }
-                    .collect { result ->
+                    .collectLatest { result ->
                         when (result) {
                             is Result.Success -> {
                                 val playlist = result.data
@@ -201,7 +201,7 @@ class DisplayViewModel @Inject constructor(
                                 }
                             }
                             is Result.Error -> {
-                                _uiState.value = DisplayUiState.Error("Failed to load playlist: ${result.exception.message}")
+                                _uiState.value = DisplayUiState.Error("Failed to load playlist: ${result.exception?.message}")
                             }
                             is Result.Loading -> {
                                 _uiState.value = DisplayUiState.Loading
@@ -219,41 +219,11 @@ class DisplayViewModel @Inject constructor(
         contentCycleJob = viewModelScope.launch {
             currentPlaylist?.let { playlist ->
                 if (playlist.items.isEmpty()) {
-                    // If items became empty after loading, reflect this.
-                    // Or rely on PlaylistManager to handle empty state.
-                    // _uiState.value = DisplayUiState.EmptyPlaylist // Potentially update UI state
                     Logger.w("startContentCycle: Current playlist is empty, stopping cycle.")
-                    playlistManager.stopPlaylist() // Ensure manager also knows
-                    return@launch
+                    playlistManager.stopPlaylist()
+                } else {
+                    Logger.d("Content cycle started with ${playlist.items.size} items")
                 }
-                // currentContentIndex = (currentContentIndex + 1) % playlist.items.size // This logic is now in PlaylistManager
-                // val currentContent = playlist.items[currentContentIndex]
-                // val nextContent = if (playlist.items.size > 1) playlist.items[(currentContentIndex + 1) % playlist.items.size] else null
-                
-                // _uiState.value = DisplayUiState.Success(playlist.layout) // This is problematic, Playlist doesn't have 'layout'
-                // The DisplayUiState.Success should be driven by the loaded LayoutWithMediaItems
-                // The PlaylistManager should drive the currentMediaItem which is observed by the UI
-                
-                // reportCurrentContent(currentContent) // Logic for reporting current content should use PlaylistManager's state
-
-                // The duration and delay logic should be handled by PlaylistManager.
-                // val duration = if (currentContent.duration > 0) currentContent.duration.toLong() * 1000 else 5000L
-                // delay(duration)
-                // startContentCycle() // Loop is handled by PlaylistManager or its item consumption
-                
-                // For now, if we are manually cycling here with the old playlist model:
-                // We need a way to update the UI with the current item. This ViewModel doesn't directly show it anymore.
-                // The UI observes playlistManager.currentItemFlow.
-                // This startContentCycle and the direct playlist handling here needs to be re-evaluated
-                // against the responsibilities of PlaylistManager.
-                // For now, let's assume PlaylistManager is the primary driver of content display.
-                // The old code for startContentCycle seems to duplicate PlaylistManager's role.
-                
-                // If loadInitialPlaylist is meant to populate the old `currentPlaylist` for some other logic,
-                // that logic also needs review.
-                // The PlaylistManager should be the source of truth for what's playing.
-                Logger.d("Old startContentCycle was called. This logic should be reviewed as PlaylistManager handles item cycling.")
-
             }
         }
     }
@@ -261,37 +231,23 @@ class DisplayViewModel @Inject constructor(
     private fun reportCurrentContent(content: Content) {
         viewModelScope.launch {
             try {
-                when (val statusResult = deviceRepository.getApplicationStatus()) { // Direct suspend call
+                when (val statusResult = deviceRepository.getApplicationStatus()) {
                     is Result.Success -> {
                         val currentStatus = statusResult.data
-                        
-                        // Get the content ID using safe reflection to avoid direct property access
-                        val contentId = try {
-                            // Try different approaches to get id
-                            val idField = content.javaClass.getDeclaredField("id")
-                            idField.isAccessible = true
-                            idField.get(content)?.toString()
-                        } catch (e: Exception) {
-                            Logger.w("Could not access content.id: ${e.message}")
-                            null // If we can't access id, use null
-                        }
-                        
                         val updatedStatus = currentStatus.copy(
-                            currentContentId = contentId,
+                            currentContentId = content.id,
                             currentPlaylistId = currentPlaylist?.id
                         )
                         deviceRepository.updateApplicationStatus(updatedStatus)
                     }
                     is Result.Error -> {
-                        Logger.e(statusResult.exception, "Failed to get application status for reporting content: ${statusResult.exception.message}")
+                        Logger.e(statusResult.exception, "Failed to get application status for reporting content")
                     }
                     is Result.Loading -> {
-                        // Handle loading state if necessary, though less common for a direct suspend call returning Result
                         Logger.d("Application status is loading while trying to report content.")
                     }
                 }
             } catch (e: Exception) {
-                // Log error, but don't necessarily disrupt UI
                 Logger.e(e, "Failed to report current content: ${e.message}")
             }
         }
