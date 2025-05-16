@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.dao.LayoutDao
 import com.signagepro.app.core.data.local.dao.MediaItemDao
+import com.signagepro.app.core.data.local.dao.PlaylistDao
 import com.signagepro.app.core.data.local.db.SignageProDatabase
 import dagger.Module
 import dagger.Provides
@@ -45,5 +46,11 @@ object DatabaseModule {
     @Singleton
     fun provideDeviceSettingsDao(appDatabase: SignageProDatabase): DeviceSettingsDao {
         return appDatabase.deviceSettingsDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePlaylistDao(appDatabase: SignageProDatabase): PlaylistDao {
+        return appDatabase.playlistDao()
     }
 }
