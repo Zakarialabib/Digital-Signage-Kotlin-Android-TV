@@ -17,14 +17,14 @@ import com.signagepro.app.core.data.model.Content
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebPageRenderer(
-    webPageContent: Content.WebPage,
+    webContent: Content.Web,
     modifier: Modifier = Modifier,
     onPageFinishedLoading: (() -> Unit)? = null // Callback when page finishes loading
 ) {
     val context = LocalContext.current
     val webView = remember { WebView(context) }
 
-    DisposableEffect(webPageContent.id, webPageContent.url) {
+    DisposableEffect(webContent.id, webContent.url) {
         webView.apply {
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
@@ -40,8 +40,8 @@ fun WebPageRenderer(
             // For TV, consider initial scale and other viewport settings
             // settings.initialScale = 100 // Example
 
-            if (webPageContent.url.isNotEmpty()) {
-                loadUrl(webPageContent.url)
+            if (webContent.url.isNotEmpty()) {
+                loadUrl(webContent.url)
             } else {
                 loadData("<html><body><p>No URL provided for web page.</p></body></html>", "text/html", "UTF-8")
             }

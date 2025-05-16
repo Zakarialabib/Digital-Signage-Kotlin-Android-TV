@@ -12,7 +12,7 @@ import com.signagepro.app.core.network.dto.toEntity
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.core.data.model.Content
-import com.signagepro.app.core.data.model.Content.Playlist
+import com.signagepro.app.core.data.model.ContentType
 import com.signagepro.app.features.display.manager.CacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -212,12 +212,26 @@ class ContentRepositoryImpl @Inject constructor(
     override fun getPlaylist(playlistId: String): Flow<com.signagepro.app.core.utils.Result<Playlist>> {
         // Using placeholder Playlist from com.signagepro.app.core.data.repository package
         // TODO("Implement actual logic to fetch from remote/local or use a proper model")
-        val dummyImage = Content.Image("img1", "http://example.com/image.png", duration = 10)
-        val dummyVideo = Content.Video("vid1", "http://example.com/video.mp4", duration = 30)
+        val dummyImage = Content.Image(
+            id = "img1", 
+            name = "Sample Image",
+            description = "A sample image for display",
+            url = "http://example.com/image.png", 
+            duration = 10
+        )
+        val dummyVideo = Content.Video(
+            id = "vid1", 
+            name = "Sample Video",
+            description = "A sample video for display",
+            url = "http://example.com/video.mp4", 
+            duration = 30
+        )
         val dummyPlaylist = Playlist(
             id = playlistId,
+            name = "Default Playlist",
+            description = "Default playlist for testing",
             items = listOf(dummyImage, dummyVideo),
-            duration = 0 // Calculated from items
+            isActive = true
         )
         return flow { emit(com.signagepro.app.core.utils.Result.Success(dummyPlaylist)) }
     }
@@ -225,7 +239,36 @@ class ContentRepositoryImpl @Inject constructor(
     override fun getContentItem(contentId: String): Flow<com.signagepro.app.core.utils.Result<Content>> {
         // Using placeholder Content from com.signagepro.app.core.data.repository package
         // TODO("Implement actual logic or use a proper model")
-        val dummyContent = Content.Image(contentId, "http://example.com/image.png", duration = 10)
+        val dummyContent = when (contentId.first()) {
+            'i' -> Content.Image(
+                id = contentId, 
+                name = "Sample Image",
+                description = "A sample image for display",
+                url = "http://example.com/image.png", 
+                duration = 10
+            )
+            'v' -> Content.Video(
+                id = contentId, 
+                name = "Sample Video",
+                description = "A sample video for display",
+                url = "http://example.com/video.mp4", 
+                duration = 30
+            )
+            'w' -> Content.Web(
+                id = contentId, 
+                name = "Sample Web",
+                description = "A sample web content for display",
+                url = "http://example.com", 
+                duration = 20
+            )
+            else -> Content.Text(
+                id = contentId, 
+                name = "Sample Text",
+                description = "A sample text for display",
+                text = "Sample display text", 
+                duration = 10
+            )
+        }
         return flow { emit(com.signagepro.app.core.utils.Result.Success(dummyContent)) }
     }
 

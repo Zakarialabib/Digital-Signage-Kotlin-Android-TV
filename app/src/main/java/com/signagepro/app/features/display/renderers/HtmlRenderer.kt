@@ -15,14 +15,14 @@ import com.signagepro.app.core.data.model.Content
 
 @Composable
 fun HtmlRenderer(
-    htmlContent: Content.Html,
+    webContent: Content.Web,
     modifier: Modifier = Modifier,
     onFinished: () -> Unit // HTML content might have internal timers or be indefinite
 ) {
     val context = LocalContext.current
     val webView = remember { WebView(context) }
 
-    DisposableEffect(htmlContent.id, htmlContent.url, htmlContent.rawHtml) {
+    DisposableEffect(webContent.id, webContent.url) {
         webView.apply {
             webViewClient = object : WebViewClient() {
                 // You might want to override onPageFinished if loading a URL
@@ -34,12 +34,11 @@ fun HtmlRenderer(
             settings.useWideViewPort = true
             settings.domStorageEnabled = true
 
-            if (!htmlContent.rawHtml.isNullOrEmpty()) {
-                loadDataWithBaseURL(null, htmlContent.rawHtml, "text/html", "UTF-8", null)
-            } else if (!htmlContent.url.isNullOrEmpty()) {
-                loadUrl(htmlContent.url)
+            // Load the URL since Content.Web primarily uses URL
+            if (webContent.url.isNotEmpty()) {
+                loadUrl(webContent.url)
             } else {
-                // Handle case where neither rawHTML nor URL is provided
+                // Handle case where URL is not provided
                 loadData("<html><body><p>No HTML content provided.</p></body></html>", "text/html", "UTF-8")
             }
         }
