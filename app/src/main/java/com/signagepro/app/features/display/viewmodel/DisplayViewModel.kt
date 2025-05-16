@@ -261,22 +261,25 @@ class DisplayViewModel @Inject constructor(
     private fun reportCurrentContent(content: Content) {
         viewModelScope.launch {
             try {
-                // Safely collect the first (or null) status and update application status
-                deviceRepository.getApplicationStatus().collect { statusResult ->
-                    if (statusResult is Result.Success) {
+                when (val statusResult = deviceRepository.getApplicationStatus()) { // Direct suspend call
+                    is Result.Success -> {
                         val currentStatus = statusResult.data
+                        // Ensure 'content.id' is accessible and correct type for 'currentContentId'
+                        // Ensure 'currentPlaylist?.id' is accessible and correct type for 'currentPlaylistId'
                         val updatedStatus = currentStatus.copy(
-                            currentContentId = content.id,
-                            currentPlaylistId = currentPlaylist?.id
+                            currentContentId = content.id, 
+                            currentPlaylistId = currentPlaylist?.id 
                         )
                         deviceRepository.updateApplicationStatus(updatedStatus)
                     }
-                    // Only collect the first result then complete
-                    return@collect
+                    is Result.Error -> {
+                        Logger.e(statusResult.exception, "Failed to get application status for reporting content: ${statusResult.exception.message}")
+                    }
+                    // Result.Loading is not expected here from a simple suspend fun returning Result
                 }
             } catch (e: Exception) {
                 // Log error, but don't necessarily disrupt UI
-                Logger.e("Failed to report current content: ${e.message}")
+                Logger.e(e, "Failed to report current content: ${e.message}")
             }
         }
     }
