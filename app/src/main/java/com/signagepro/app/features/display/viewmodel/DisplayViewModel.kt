@@ -264,10 +264,8 @@ class DisplayViewModel @Inject constructor(
                 when (val statusResult = deviceRepository.getApplicationStatus()) { // Direct suspend call
                     is Result.Success -> {
                         val currentStatus = statusResult.data
-                        // Ensure 'content.id' is accessible and correct type for 'currentContentId'
-                        // Ensure 'currentPlaylist?.id' is accessible and correct type for 'currentPlaylistId'
                         val updatedStatus = currentStatus.copy(
-                            currentContentId = content.id, 
+                            currentContentId = content.id, // Assuming Content.id is the correct field
                             currentPlaylistId = currentPlaylist?.id 
                         )
                         deviceRepository.updateApplicationStatus(updatedStatus)
@@ -275,7 +273,10 @@ class DisplayViewModel @Inject constructor(
                     is Result.Error -> {
                         Logger.e(statusResult.exception, "Failed to get application status for reporting content: ${statusResult.exception.message}")
                     }
-                    // Result.Loading is not expected here from a simple suspend fun returning Result
+                    is Result.Loading -> {
+                        // Handle loading state if necessary, though less common for a direct suspend call returning Result
+                        Logger.d("Application status is loading while trying to report content.")
+                    }
                 }
             } catch (e: Exception) {
                 // Log error, but don't necessarily disrupt UI
