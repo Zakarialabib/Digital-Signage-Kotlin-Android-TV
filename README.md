@@ -4,10 +4,7 @@ This is an Android TV app that displays a list of images and videos on a digital
 
 ## Features
 
-- Display a list of images and videos
-- Browse through the images and videos
-- View images and videos in a full-screen mode
-- Swipe through images and videos
+
 
 ## Installation
 

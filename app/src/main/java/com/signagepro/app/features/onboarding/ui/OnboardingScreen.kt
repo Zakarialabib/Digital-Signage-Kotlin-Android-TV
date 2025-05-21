@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.signagepro.app.features.onboarding.viewmodel.OnboardingViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -20,6 +21,7 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val pagerState = rememberPagerState(pageCount = { 3 })
+    val coroutineScope = rememberCoroutineScope()
     
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -29,59 +31,66 @@ fun OnboardingScreen(
             state = pagerState,
             modifier = Modifier.weight(1f)
         ) { page ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                when (page) {
-                    0 -> OnboardingPage(
-                        title = "Welcome to SignagePro",
-                        description = "Professional digital signage solution for your TV displays"
-                    )
-                    1 -> OnboardingPage(
-                        title = "Choose Your Template",
-                        description = "Select from our pre-made templates or create your own layout"
-                    )
-                    2 -> OnboardingPage(
-                        title = "Ready to Start",
-                        description = "Let's set up your first display"
-                    )
-                }
-            }
+            OnboardingPage(
+                content = viewModel.getOnboardingContent(page)
+            )
         }
 
-        Button(
-            onClick = onComplete,
+        Row(
             modifier = Modifier
-                .padding(16.dp)
                 .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(if (pagerState.currentPage == 2) "Get Started" else "Next")
+            if (pagerState.currentPage > 0) {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                        }
+                    }
+                ) {
+                    Text("Previous")
+                }
+            } else {
+                Spacer(Modifier.width(64.dp))
+            }
+
+            Button(
+                onClick = {
+                    if (pagerState.currentPage < 2) {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
+                    } else {
+                        viewModel.completeOnboarding()
+                        onComplete()
+                    }
+                }
+            ) {
+                Text(if (pagerState.currentPage == 2) "Get Started" else "Next")
+            }
         }
     }
 }
 
 @Composable
 private fun OnboardingPage(
-    title: String,
-    description: String
+    content: OnboardingContent
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(32.dp)
     ) {
         Text(
-            text = title,
+            text = content.title,
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = description,
+            text = content.description,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center
         )
