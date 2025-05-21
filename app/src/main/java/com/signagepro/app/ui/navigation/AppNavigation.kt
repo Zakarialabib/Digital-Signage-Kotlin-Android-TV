@@ -34,6 +34,7 @@ import com.signagepro.app.features.device.ui.DeviceInfoScreen
 import com.signagepro.app.features.device.viewmodel.DeviceInfoViewModel
 import com.signagepro.app.features.network.ui.NetworkSettingsScreen
 import com.signagepro.app.features.network.viewmodel.NetworkSettingsViewModel
+import com.signagepro.app.features.onboarding.ui.OnboardingScreen // Added import
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -66,6 +67,11 @@ fun AppNavigation(
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     }
+                    SplashDestination.Onboarding -> { // Added Onboarding navigation
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
                     SplashDestination.Display -> {
                         val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
                         val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
@@ -95,7 +101,24 @@ fun AppNavigation(
                 }
             )
         }
-        
+
+        composable(Screen.Onboarding.route) { // Added OnboardingScreen composable
+            OnboardingScreen(
+                onComplete = {
+                    // After onboarding, navigate to Display, ensuring correct layoutId if available
+                    val splashViewModel: SplashViewModel = hiltViewModel() // Re-access to get latest settings
+                    val coroutineScope = rememberCoroutineScope()
+                    coroutineScope.launch {
+                        val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
+                        val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
+                        navController.navigate(createDisplayRoute(currentLayoutId)) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
         composable(
             route = Screen.Display.route,
             arguments = listOf(navArgument("layoutId") { type = NavType.StringType })

@@ -55,6 +55,13 @@ class SharedPrefsManager(context: Context) {
         prefs.edit().putLong(KEY_LAST_HEARTBEAT_TIMESTAMP, timestamp).apply()
     }
 
+    fun setOnboardingCompleted(completed: Boolean) {
+        prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, completed).apply()
+    }
+
+    fun isOnboardingCompleted(): Boolean {
+        return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+    }
 
     companion object {
         private const val PREFS_NAME = "SignageProPrefs"
@@ -62,5 +69,6 @@ class SharedPrefsManager(context: Context) {
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_DEVICE_REGISTERED = "device_registered"
         private const val KEY_LAST_HEARTBEAT_TIMESTAMP = "last_heartbeat_timestamp"
+        private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     }
 }

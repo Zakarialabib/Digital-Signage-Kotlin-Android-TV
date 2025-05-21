@@ -2,6 +2,7 @@ package com.signagepro.app.features.splash.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.signagepro.app.core.data.local.SharedPrefsManager
 import com.signagepro.app.core.data.repository.DeviceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,8 @@ sealed class SplashDestination {
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
+    private val sharedPrefsManager: SharedPrefsManager
 ) : ViewModel() {
 
     private val _navigateTo = MutableStateFlow<SplashDestination>(SplashDestination.Undetermined)
@@ -31,7 +33,7 @@ class SplashViewModel @Inject constructor(
                 val isRegistered = deviceRepository.isDeviceRegistered()
                 _navigateTo.value = when {
                     !isRegistered -> SplashDestination.Registration
-                    isFirstLaunch() -> SplashDestination.Onboarding
+                    shouldShowOnboarding() -> SplashDestination.Onboarding
                     else -> SplashDestination.Display
                 }
             } catch (e: Exception) {
@@ -41,9 +43,8 @@ class SplashViewModel @Inject constructor(
         }
     }
 
-    private fun isFirstLaunch(): Boolean {
-        // TODO: Implement actual first launch check using SharedPreferences
-        return false // For now, skip onboarding
+    private fun shouldShowOnboarding(): Boolean {
+        return !sharedPrefsManager.isOnboardingCompleted()
     }
 
     fun resetNavigation() {
