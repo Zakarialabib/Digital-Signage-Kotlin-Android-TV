@@ -34,7 +34,7 @@ import com.signagepro.app.features.device.ui.DeviceInfoScreen
 import com.signagepro.app.features.device.viewmodel.DeviceInfoViewModel
 import com.signagepro.app.features.network.ui.NetworkSettingsScreen
 import com.signagepro.app.features.network.viewmodel.NetworkSettingsViewModel
-import com.signagepro.app.features.onboarding.ui.OnboardingScreen // Added import
+import com.signagepro.app.features.onboarding.ui.OnboardingScreen
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -67,7 +67,7 @@ fun AppNavigation(
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     }
-                    SplashDestination.Onboarding -> { // Added Onboarding navigation
+                    SplashDestination.Onboarding -> {
                         navController.navigate(Screen.Onboarding.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
@@ -102,12 +102,12 @@ fun AppNavigation(
             )
         }
 
-        composable(Screen.Onboarding.route) { // Added OnboardingScreen composable
+        composable(Screen.Onboarding.route) {
+            val splashViewModel: SplashViewModel = hiltViewModel()
+            val coroutineScope = rememberCoroutineScope()
+            
             OnboardingScreen(
                 onComplete = {
-                    // After onboarding, navigate to Display, ensuring correct layoutId if available
-                    val splashViewModel: SplashViewModel = hiltViewModel() // Re-access to get latest settings
-                    val coroutineScope = rememberCoroutineScope()
                     coroutineScope.launch {
                         val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
                         val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"

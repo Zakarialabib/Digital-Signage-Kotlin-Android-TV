@@ -20,7 +20,7 @@ sealed class SplashDestination {
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val deviceRepository: DeviceRepository,
+    val deviceRepository: DeviceRepository,
     private val sharedPreferencesManager: SharedPreferencesManager
 ) : ViewModel() {
 

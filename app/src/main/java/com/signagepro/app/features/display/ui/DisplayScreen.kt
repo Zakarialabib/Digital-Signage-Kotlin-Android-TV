@@ -109,6 +109,33 @@ fun DisplayScreen(
                     fontSize = 18.sp
                 )
             }
+            is DisplayUiState.EmptyLayout -> {
+                Text(
+                    text = "The layout is empty. Please add content to display.",
+                    color = Color.Yellow,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
+                )
+            }
+            is DisplayUiState.NoLayoutAssigned -> {
+                Text(
+                    text = "No layout has been assigned to this device.",
+                    color = Color.Yellow,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
+                )
+            }
+            else -> {
+                Text(
+                    text = "Unknown display state.",
+                    color = Color.Yellow,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
+                )
+            }
         }
         
         // Display PlaylistManager errors if any (overlay at bottom)
@@ -134,23 +161,23 @@ fun DisplayScreen(
 }
 
 @Composable
-fun RenderContent(mediaItem: MediaItemEntity) {
+fun RenderContent(content: MediaItemEntity) {
     // This is where different content types will be rendered
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        when (mediaItem.type?.lowercase()) {
+        when (content.type?.lowercase()) {
             "image" -> {
-                ImageRenderer(mediaItem = mediaItem)
+                ImageRenderer(mediaItem = content)
             }
             "video" -> {
-                VideoRenderer(mediaItem = mediaItem)
+                VideoRenderer(mediaItem = content)
             }
             "web" -> {
-                WebRenderer(mediaItem = mediaItem)
+                WebRenderer(mediaItem = content)
             }
             else -> {
                 // Fallback for unknown types
                 Text(
-                    "Unsupported content type: ${mediaItem.type}",
+                    "Unsupported content type: ${content.type}",
                     color = Color.Red,
                     fontSize = 24.sp,
                     textAlign = TextAlign.Center,
