@@ -49,22 +49,6 @@ sealed class Content {
     }
 
     @Serializable
-    data class Audio(
-        override val id: String,
-        override val name: String,
-        override val description: String? = null,
-        val url: String,
-        val localPath: String? = null,
-        val autoPlay: Boolean = true,
-        val loop: Boolean = false,
-        override val duration: Int = 0, // 0 means use audio's actual duration
-        val metadata: Map<String, String> = emptyMap(),
-        override val lastAccessed: Long = System.currentTimeMillis()
-    ) : Content() {
-        override val type: ContentType = ContentType.AUDIO
-    }
-
-    @Serializable
     data class Web(
         override val id: String,
         override val name: String,
@@ -102,35 +86,6 @@ sealed class Content {
         override val lastAccessed: Long = System.currentTimeMillis()
     ) : Content() {
         override val type: ContentType = ContentType.LIVE_STREAM
-    }
-
-    @Serializable
-    data class Html(
-        override val id: String,
-        override val name: String,
-        override val description: String? = null,
-        val htmlContent: String, // Can be inline HTML or a URL to a .html file
-        val baseUrl: String? = null, // For resolving relative paths if htmlContent is inline
-        override val duration: Int = 30,
-        val metadata: Map<String, String> = emptyMap(),
-        override val lastAccessed: Long = System.currentTimeMillis()
-    ) : Content() {
-        override val type: ContentType = ContentType.HTML
-    }
-
-    @Serializable
-    data class WebPage(
-        override val id: String,
-        override val name: String,
-        override val description: String? = null,
-        val url: String, // Similar to Web, but explicitly for a full webpage render
-        override val duration: Int = 30,
-        val enableJavaScript: Boolean = true,
-        val userAgent: String? = null,
-        val metadata: Map<String, String> = emptyMap(),
-        override val lastAccessed: Long = System.currentTimeMillis()
-    ) : Content() {
-        override val type: ContentType = ContentType.WEBPAGE
     }
 
     @Serializable
@@ -206,12 +161,5 @@ enum class ImageScaleType {
 enum class PlaylistLoopMode {
     NONE, // Play once
     LOOP_LIST, // Loop entire list
-    LOOP_ITEM // Loop current item (less common for playlist, more for single content)
-}
-
-@Serializable
-enum class CarouselTransitionType {
-    FADE,
-    SLIDE_HORIZONTAL,
-    SLIDE_VERTICAL
+    LOOP_ITEM // Loop current item
 }

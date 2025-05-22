@@ -12,15 +12,10 @@ import com.signagepro.app.core.network.dto.toEntity
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.core.data.model.Content
-import com.signagepro.app.core.data.model.ContentType
-import com.signagepro.app.core.data.model.Content.Image
-import com.signagepro.app.core.data.model.Content.Video
-import com.signagepro.app.core.data.model.Content.Playlist
 import com.signagepro.app.features.display.manager.CacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,10 +31,77 @@ class ContentRepositoryImpl @Inject constructor(
     private val cacheManager: CacheManager
 ) : ContentRepository {
 
-    /**
-     * Fetches layout and associated media items from the API, saves them to the database,
-     * and initiates download/caching of media files
-     */
+    override fun getPlaylist(playlistId: String): Flow<Result<Content.Playlist>> = flow {
+        // Create sample content for testing
+        val items = listOf(
+            createSampleImage(playlistId + "_img1"),
+            createSampleVideo(playlistId + "_vid1")
+        )
+        
+        val dummyPlaylist = Content.Playlist(
+            id = playlistId,
+            name = "Default Playlist",
+            description = "Default playlist for testing",
+            items = items,
+            duration = 0,
+            currentItemIndex = 0,
+            loopMode = com.signagepro.app.core.data.model.PlaylistLoopMode.LOOP_LIST
+        )
+        emit(Result.Success(dummyPlaylist))
+    }
+
+    override fun getContentItem(contentId: String): Flow<Result<Content>> = flow {
+        val dummyContent = when (contentId.firstOrNull()) {
+            'i' -> createSampleImage(contentId)
+            'v' -> createSampleVideo(contentId)
+            'w' -> createSampleWeb(contentId)
+            else -> createSampleText(contentId)
+        }
+        emit(Result.Success(dummyContent))
+    }
+
+    private fun createSampleImage(id: String) = Content.Image(
+        id = id,
+        name = "Sample Image",
+        description = "A sample image for display",
+        url = "https://picsum.photos/800/600",
+        duration = 10
+    )
+    
+    private fun createSampleVideo(id: String) = Content.Video(
+        id = id,
+        name = "Sample Video",
+        description = "A sample video for display",
+        url = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
+        duration = 30
+    )
+    
+    private fun createSampleWeb(id: String) = Content.Web(
+        id = id,
+        name = "Sample Web",
+        description = "A sample web content for display",
+        url = "https://example.com",
+        duration = 20
+    )
+    
+    private fun createSampleText(id: String) = Content.Text(
+        id = id,
+        name = "Sample Text",
+        description = "A sample text for display",
+        text = "Sample display text",
+        duration = 10
+    )
+
+    override suspend fun preloadPlaylistContent(playlist: Content.Playlist): Result<Unit> {
+        // TODO: Implement preloading logic for playlist content
+        return Result.Success(Unit)
+    }
+
+    override suspend fun clearContentCache(): Result<Unit> {
+        // TODO: Implement cache clearing logic
+        return Result.Success(Unit)
+    }
+
     override suspend fun fetchAndCacheLayout(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
         try {
             Logger.d("ContentRepository: Fetching layout $layoutId from API")
@@ -73,10 +135,7 @@ class ContentRepositoryImpl @Inject constructor(
             Result.Error(e)
         }
     }
-    
-    /**
-     * Caches media files for all media items that are not of type 'web'
-     */
+
     private suspend fun cacheMediaFiles(mediaItems: List<MediaItemEntity>) {
         mediaItems.forEach { mediaItem ->
             if (mediaItem.type != "web" && !mediaItem.url.isNullOrBlank()) {
@@ -105,7 +164,7 @@ class ContentRepositoryImpl @Inject constructor(
             }
         }
     }
-    
+
     override suspend fun getCachedLayoutWithMediaItems(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
         try {
             val layoutIdL = layoutId.toLongOrNull()
@@ -123,13 +182,11 @@ class ContentRepositoryImpl @Inject constructor(
             Result.Error(e)
         }
     }
-    
+
     override suspend fun refreshContentIfNeeded(layoutId: String, forceRefresh: Boolean, maxAgeMinutes: Int): Result<LayoutWithMediaItems> {
         try {
-            // First try to get from cache
             val cachedResult = getCachedLayoutWithMediaItems(layoutId)
             
-            // If cache has valid data and we're not forcing a refresh, use it
             if (cachedResult is Result.Success && !forceRefresh) {
                 val now = Date().time
                 val layoutAge = (now - cachedResult.data.layout.lastSyncTimestamp) / (60 * 1000L)
@@ -141,11 +198,9 @@ class ContentRepositoryImpl @Inject constructor(
                 Logger.d("ContentRepository: Cached layout too old (${layoutAge}min > ${maxAgeMinutes}min), refreshing")
             }
             
-            // Either cache miss, forced refresh, or cached data too old - fetch from network
             return fetchAndCacheLayout(layoutId)
         } catch (e: Exception) {
             Logger.e(e, "ContentRepository: Error in refreshContentIfNeeded for layout $layoutId")
-            // If there was an error refreshing, fall back to whatever is in cache
             return getCachedLayoutWithMediaItems(layoutId).let { cachedResult ->
                 if (cachedResult is Result.Success) {
                     Logger.w("ContentRepository: Refresh failed, falling back to cached content")
@@ -156,96 +211,24 @@ class ContentRepositoryImpl @Inject constructor(
             }
         }
     }
-    
+
     override suspend fun cleanupUnusedMedia(currentLayoutId: String?) {
         try {
             val keepMediaItemIds = currentLayoutId?.toLongOrNull()?.let { layoutIdL ->
                 layoutDao.getLayoutWithMediaItems(layoutIdL).firstOrNull()?.mediaItems?.map { it.id } 
             } ?: emptyList()
             
-            // Find all media items to keep
             val mediaItemsToKeep = if (keepMediaItemIds.isNotEmpty()) {
                 mediaItemDao.getMediaItemsByIds(keepMediaItemIds)
             } else {
                 emptyList()
             }
             
-            // Evict cache files for items not in the current layout
             val bytesFreed = cacheManager.evictCache(itemsToKeep = mediaItemsToKeep)
             Logger.i("ContentRepository: Cache cleanup complete, freed $bytesFreed bytes")
         } catch (e: Exception) {
             Logger.e(e, "ContentRepository: Error during media cleanup")
         }
-    }
-
-    // Stubs for interface methods
-    override fun getPlaylist(playlistId: String): Flow<Result<Playlist>> = flow {
-        // Create sample content for testing
-        val items = listOf(
-            createSampleImage("img1"),
-            createSampleVideo("vid1")
-        )
-        
-        val dummyPlaylist = Content.Playlist(
-            id = playlistId,
-            name = "Default Playlist",
-            description = "Default playlist for testing",
-            items = items
-            // Relying on default values for other Content.Playlist fields like duration, currentItemIndex, loopMode etc.
-        )
-        emit(Result.Success(dummyPlaylist))
-    }
-
-    override fun getContentItem(contentId: String): Flow<Result<Content>> = flow {
-        val dummyContent = when (contentId.firstOrNull()) {
-            'i' -> createSampleImage(contentId)
-            'v' -> createSampleVideo(contentId)
-            'w' -> createSampleWeb(contentId)
-            else -> createSampleText(contentId)
-        }
-        emit(Result.Success(dummyContent))
-    }
-
-    private fun createSampleImage(id: String) = Content.Image(
-        id = id, 
-        name = "Sample Image",
-        description = "A sample image for display",
-        url = "http://example.com/image.png", 
-        duration = 10
-    )
-    
-    private fun createSampleVideo(id: String) = Content.Video(
-        id = id, 
-        name = "Sample Video",
-        description = "A sample video for display",
-        url = "http://example.com/video.mp4", 
-        duration = 30
-    )
-    
-    private fun createSampleWeb(id: String) = Content.Web(
-        id = id, 
-        name = "Sample Web",
-        description = "A sample web content for display",
-        url = "http://example.com", 
-        duration = 20
-    )
-    
-    private fun createSampleText(id: String) = Content.Text(
-        id = id, 
-        name = "Sample Text",
-        description = "A sample text for display",
-        text = "Sample display text", 
-        duration = 10
-    )
-
-    override suspend fun preloadPlaylistContent(playlist: Playlist): Result<Unit> {
-        // TODO: Implement preloading logic
-        return Result.Success(Unit)
-    }
-
-    override suspend fun clearContentCache(): Result<Unit> {
-        // TODO: Implement cache clearing logic
-        return Result.Success(Unit)
     }
 
     override fun getOrderedMediaItemsForLayout(layoutId: Long): Flow<List<MediaItemEntity>> {
@@ -269,7 +252,13 @@ class ContentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteMediaItemsFromCache(items: List<MediaItemEntity>, cacheDir: File) {
-        // TODO: Implement media item deletion
-        throw UnsupportedOperationException("Method not implemented")
+        items.forEach { item ->
+            item.localPath?.let { path ->
+                val file = File(cacheDir, path)
+                if (file.exists()) {
+                    file.delete()
+                }
+            }
+        }
     }
 }
