@@ -54,7 +54,7 @@ class DisplayViewModel @Inject constructor(
     val currentMediaItem: StateFlow<MediaItemEntity?> = playlistManager.currentItemFlow
     val playlistError: StateFlow<String?> = playlistManager.playlistErrorFlow
 
-    private var currentPlaylist: Playlist? = null
+    private var currentPlaylist: Content.Playlist? = null
     private var currentContentIndex = -1
     private var contentCycleJob: Job? = null
 

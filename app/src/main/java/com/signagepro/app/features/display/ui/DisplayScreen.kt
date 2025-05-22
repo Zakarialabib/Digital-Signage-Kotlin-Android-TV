@@ -62,7 +62,7 @@ fun DisplayScreen(
                 // Main content display area
                 if (currentMediaItem != null) {
                     // Render the appropriate content based on type
-                    RenderContent(content = currentMediaItem!!)
+                    RenderContent(mediaItem = currentMediaItem!!)
                     
                     // Optional debug overlay
                     /*
@@ -143,23 +143,23 @@ fun DisplayScreen(
 }
 
 @Composable
-fun RenderContent(content: MediaItemEntity) {
+fun RenderContent(mediaItem: MediaItemEntity) {
     // This is where different content types will be rendered
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        when (content.type?.lowercase()) {
+        when (mediaItem.type?.lowercase()) {
             "image" -> {
-                ImageRenderer(mediaItem = content)
+                ImageRenderer(mediaItem = mediaItem)
             }
             "video" -> {
-                VideoRenderer(mediaItem = content)
+                VideoRenderer(mediaItem = mediaItem)
             }
             "web" -> {
-                WebRenderer(mediaItem = content)
+                WebRenderer(mediaItem = mediaItem)
             }
             else -> {
                 // Fallback for unknown types
                 Text(
-                    "Unsupported content type: ${content.type}",
+                    "Unsupported content type: ${mediaItem.type}",
                     color = Color.Red,
                     fontSize = 24.sp,
                     textAlign = TextAlign.Center,
