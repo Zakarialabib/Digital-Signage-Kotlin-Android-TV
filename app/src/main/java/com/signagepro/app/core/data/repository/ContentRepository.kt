@@ -35,7 +35,7 @@ interface ContentRepository {
      * Preloads content items for a given playlist to ensure smooth playback.
      * This could involve downloading media files to local storage.
      */
-    suspend fun preloadPlaylistContent(playlist: Content.Playlist): Result<Unit>
+    suspend fun preloadPlaylistContent(playlist: Playlist): Result<Unit>
 
     /**
      * Clears any cached or preloaded content.

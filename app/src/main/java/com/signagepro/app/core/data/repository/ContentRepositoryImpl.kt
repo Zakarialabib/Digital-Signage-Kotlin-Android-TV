@@ -124,7 +124,7 @@ class ContentRepositoryImpl @Inject constructor(
         duration = 0
     )
 
-    override suspend fun preloadPlaylistContent(playlist: Content.Playlist): Result<Unit> {
+    override suspend fun preloadPlaylistContent(playlist: Playlist): Result<Unit> {
         // TODO: Implement preloading logic for playlist content
         return Result.Success(Unit)
     }
