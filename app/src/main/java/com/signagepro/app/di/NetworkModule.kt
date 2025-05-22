@@ -2,7 +2,6 @@ package com.signagepro.app.di
 
 import com.google.gson.GsonBuilder
 import com.signagepro.app.BuildConfig
-import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.AuthInterceptor
 import com.signagepro.app.core.utils.Constants
@@ -64,4 +63,4 @@ object NetworkModule {
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
     }
-} 
+}

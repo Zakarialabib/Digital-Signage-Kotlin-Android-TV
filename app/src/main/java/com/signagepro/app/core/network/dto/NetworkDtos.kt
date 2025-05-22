@@ -1,6 +1,7 @@
 package com.signagepro.app.core.network.dto
 
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable // Added for kotlinx.serialization DTOs
 import com.signagepro.app.core.data.local.model.LayoutEntity
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 
@@ -17,6 +18,22 @@ data class DeviceRegistrationResponse(
     @SerializedName("device_token") val deviceToken: String?, // Bearer token for subsequent requests
     @SerializedName("player_id") val playerId: Long?, // The ID of the player in the backend
     @SerializedName("layout_id") val layoutId: Long? // Initial layout ID if assigned
+)
+
+// DTOs from core.data.model using kotlinx.serialization
+@Serializable
+data class DeviceRegistrationRequestKtx(
+    val deviceId: String, // Unique identifier for the TV device (e.g., Android ID)
+    val registrationCode: String, // Code displayed on TV, entered by user in backend
+    val deviceName: String? = null // Optional user-friendly name for the device
+)
+
+@Serializable
+data class DeviceRegistrationResponseKtx(
+    val success: Boolean,
+    val deviceApiKey: String? = null, // API key for this device to communicate with backend
+    val message: String? = null,
+    val assignedPlaylistId: String? = null // Initial playlist assigned to this device
 )
 
 // --- Generic Responses --- //
@@ -73,6 +90,40 @@ fun LayoutDto.toEntity(): LayoutEntity {
     )
 }
 
+// --- Heartbeat and Commands (from ApplicationStatus.kt) --- //
+@Serializable
+data class HeartbeatRequestKtx(
+    val deviceId: String,
+    val timestamp: Long,
+    // Changed from ApplicationStatus to Map<String, String> for simplicity in DTO
+    // The full ApplicationStatus can be constructed or used on the domain layer if needed.
+    val currentStatus: Map<String, String> 
+)
+
+@Serializable
+data class HeartbeatResponseKtx(
+    val success: Boolean,
+    val nextHeartbeatIntervalSeconds: Int? = null,
+    val commands: List<DeviceCommandKtx>? = null
+)
+
+@Serializable
+sealed class DeviceCommandKtx {
+    abstract val commandId: String
+
+    @Serializable
+    data class RestartAppKtx(override val commandId: String) : DeviceCommandKtx()
+
+    @Serializable
+    data class UpdateContentKtx(override val commandId: String, val playlistId: String) : DeviceCommandKtx()
+
+    @Serializable
+    data class UpdateAppSettingsKtx(override val commandId: String, val settingsJson: String) : DeviceCommandKtx()
+
+    @Serializable
+    data class TakeScreenshotKtx(override val commandId: String, val uploadUrl: String) : DeviceCommandKtx()
+}
+
 fun MediaItemDto.toEntity(): MediaItemEntity {
     return MediaItemEntity(
         id = this.id,
@@ -88,4 +139,38 @@ fun MediaItemDto.toEntity(): MediaItemEntity {
         displayUrl = this.url
         // lastAccessed will use its default value System.currentTimeMillis()
     )
+}
+
+// --- Heartbeat and Commands (from ApplicationStatus.kt) --- //
+@Serializable
+data class HeartbeatRequestKtx(
+    val deviceId: String,
+    val timestamp: Long,
+    // Changed from ApplicationStatus to Map<String, String> for simplicity in DTO
+    // The full ApplicationStatus can be constructed or used on the domain layer if needed.
+    val currentStatus: Map<String, String> 
+)
+
+@Serializable
+data class HeartbeatResponseKtx(
+    val success: Boolean,
+    val nextHeartbeatIntervalSeconds: Int? = null,
+    val commands: List<DeviceCommandKtx>? = null
+)
+
+@Serializable
+sealed class DeviceCommandKtx {
+    abstract val commandId: String
+
+    @Serializable
+    data class RestartAppKtx(override val commandId: String) : DeviceCommandKtx()
+
+    @Serializable
+    data class UpdateContentKtx(override val commandId: String, val playlistId: String) : DeviceCommandKtx()
+
+    @Serializable
+    data class UpdateAppSettingsKtx(override val commandId: String, val settingsJson: String) : DeviceCommandKtx()
+
+    @Serializable
+    data class TakeScreenshotKtx(override val commandId: String, val uploadUrl: String) : DeviceCommandKtx()
 }

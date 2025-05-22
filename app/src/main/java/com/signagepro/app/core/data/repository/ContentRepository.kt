@@ -6,7 +6,7 @@ import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.data.model.Content
-import com.signagepro.app.core.data.model.Content.Playlist
+import com.signagepro.app.core.data.model.Content
 import com.signagepro.app.core.model.Layout
 import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.utils.Result
@@ -24,7 +24,7 @@ interface ContentRepository {
      * Fetches a playlist by its ID.
      * This might involve fetching from a remote source or local cache.
      */
-    fun getPlaylist(playlistId: String): Flow<com.signagepro.app.core.utils.Result<Playlist>>
+    fun getPlaylist(playlistId: String): Flow<com.signagepro.app.core.utils.Result<Content.Playlist>>
 
     /**
      * Fetches a specific content item by its ID.
@@ -36,7 +36,7 @@ interface ContentRepository {
      * Preloads content items for a given playlist to ensure smooth playback.
      * This could involve downloading media files to local storage.
      */
-    suspend fun preloadPlaylistContent(playlist: Playlist): com.signagepro.app.core.utils.Result<Unit>
+    suspend fun preloadPlaylistContent(playlist: Content.Playlist): com.signagepro.app.core.utils.Result<Unit>
 
     /**
      * Clears any cached or preloaded content.

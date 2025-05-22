@@ -29,10 +29,10 @@ import javax.inject.Inject
 sealed class DisplayUiState {
     object Loading : DisplayUiState()
     data class Error(val message: String) : DisplayUiState()
-    data class Success(val layout: LayoutWithMediaItems) : DisplayUiState()
-    object NoPlaylistAssigned : DisplayUiState()
-    object EmptyPlaylist : DisplayUiState()
-    // Note: currentMediaItem is now observed directly from playlistManager.currentItemFlow
+    data class Success(val layoutWithMediaItems: LayoutWithMediaItems) : DisplayUiState() // Renamed for clarity and consistency
+    object NoLayoutAssigned : DisplayUiState() // Covers 'NoPlaylistAssigned' and 'NoLayout' from ContentViewModel
+    object EmptyLayout : DisplayUiState() // Covers 'EmptyPlaylist' and 'NoMedia' from ContentViewModel
+    // currentMediaItem is observed via playlistManager.currentItemFlow
 }
 
 @HiltViewModel
@@ -84,7 +84,7 @@ class DisplayViewModel @Inject constructor(
             when (val result = contentRepository.refreshContentIfNeeded(layoutId)) {
                 is Result.Success -> {
                     val layoutWithItems = result.data
-                    _uiState.value = DisplayUiState.Success(layoutWithItems)
+                    _uiState.value = DisplayUiState.Success(layoutWithMediaItems = layoutWithItems)
                     
                     // Update device settings with current layout ID
                     deviceRepository.updateCurrentLayoutId(layoutId.toLongOrNull())
@@ -120,7 +120,7 @@ class DisplayViewModel @Inject constructor(
         when (val cacheResult = contentRepository.getCachedLayoutWithMediaItems(layoutId)) {
             is Result.Success -> {
                 val layoutWithItems = cacheResult.data
-                _uiState.value = DisplayUiState.Success(layoutWithItems)
+                _uiState.value = DisplayUiState.Success(layoutWithMediaItems = layoutWithItems)
                 playlistManager.loadPlaylist(layoutWithItems.mediaItems)
                 Logger.w("DisplayViewModel: Falling back to cached layout $layoutId")
             }
@@ -145,8 +145,8 @@ class DisplayViewModel @Inject constructor(
                     if (result is Result.Success) {
                         val layout = result.data
                         // Only update UI state and playlist if necessary (e.g., if layout changed)
-                        if ((_uiState.value as? DisplayUiState.Success)?.layout?.layout?.lastSyncTimestamp != layout.layout.lastSyncTimestamp) {
-                            _uiState.value = DisplayUiState.Success(layout)
+                        if ((_uiState.value as? DisplayUiState.Success)?.layoutWithMediaItems?.layout?.lastSyncTimestamp != layout.layout.lastSyncTimestamp) {
+                            _uiState.value = DisplayUiState.Success(layoutWithMediaItems = layout)
                             playlistManager.loadPlaylist(layout.mediaItems)
                             Logger.i("DisplayViewModel: Periodic refresh updated layout $layoutId")
                         } else {
@@ -176,7 +176,7 @@ class DisplayViewModel @Inject constructor(
                 }
 
             if (targetPlaylistId == null) {
-                _uiState.value = DisplayUiState.NoPlaylistAssigned
+                _uiState.value = DisplayUiState.NoLayoutAssigned
                 return@launch
             }
 
@@ -191,7 +191,7 @@ class DisplayViewModel @Inject constructor(
                                 val playlist = result.data
                                 currentPlaylist = playlist
                                 if (playlist.items.isEmpty()) {
-                                    _uiState.value = DisplayUiState.EmptyPlaylist
+                                    _uiState.value = DisplayUiState.EmptyLayout
                                 } else {
                                     // Preload content in a separate coroutine
                                     viewModelScope.launch { 

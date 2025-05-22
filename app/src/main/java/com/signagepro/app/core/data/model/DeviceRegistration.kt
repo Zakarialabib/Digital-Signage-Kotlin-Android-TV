@@ -2,20 +2,7 @@ package com.signagepro.app.core.data.model
 
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class DeviceRegistrationRequest(
-    val deviceId: String, // Unique identifier for the TV device (e.g., Android ID)
-    val registrationCode: String, // Code displayed on TV, entered by user in backend
-    val deviceName: String? = null // Optional user-friendly name for the device
-)
-
-@Serializable
-data class DeviceRegistrationResponse(
-    val success: Boolean,
-    val deviceApiKey: String? = null, // API key for this device to communicate with backend
-    val message: String? = null,
-    val assignedPlaylistId: String? = null // Initial playlist assigned to this device
-)
+// DeviceRegistrationRequest and DeviceRegistrationResponse moved to NetworkDtos.kt
 
 @Serializable
 data class DeviceInfo(

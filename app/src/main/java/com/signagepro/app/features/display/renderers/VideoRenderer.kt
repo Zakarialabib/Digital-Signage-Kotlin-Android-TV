@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +22,9 @@ import java.io.File
 @Composable
 fun VideoRenderer(mediaItem: MediaItemEntity) {
     val context = LocalContext.current
+
+    var playerState by remember { mutableStateOf<Int?>(null) }
+    var playerError by remember { mutableStateOf<Throwable?>(null) }
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
@@ -55,11 +61,26 @@ fun VideoRenderer(mediaItem: MediaItemEntity) {
             try {
                 val exoMediaItem = MediaItem.fromUri(uri)
                 exoPlayer.setMediaItem(exoMediaItem)
+                exoPlayer.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        playerState = playbackState
+                        if (playbackState == Player.STATE_ENDED) {
+                            // Potentially notify view model or playlist manager
+                        }
+                    }
+
+                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                        Logger.e(error, "VideoRenderer: ExoPlayer error for media item ${mediaItem.id} from $uri")
+                        playerError = error
+                        // Potentially notify view model or playlist manager to skip item
+                    }
+                })
+                exoPlayer.setMediaItem(exoMediaItem)
                 exoPlayer.prepare() // Prepares the player (loads media, buffers, etc.)
                 Logger.i("VideoRenderer: ExoPlayer prepared for media item ${mediaItem.id} from $uri")
             } catch (e: Exception) {
                 Logger.e(e, "VideoRenderer: Error preparing ExoPlayer for media item ${mediaItem.id} from $uri")
-                // Handle error state appropriately, e.g., show an error message in UI
+                playerError = e
             }
         }
     }
@@ -87,13 +108,23 @@ fun VideoRenderer(mediaItem: MediaItemEntity) {
                 modifier = Modifier.fillMaxSize()
             )
         }
-        // TODO: Implement UI for loading (Player.STATE_BUFFERING) and error states
-        // Example: Listen to exoPlayer.playbackState and exoPlayer.playerError
-        // val playbackState by exoPlayer.playbackState.collectAsState() // Requires appropriate import
-        // if (playbackState == Player.STATE_BUFFERING) { /* Show loading indicator */ }
-        // if (exoPlayer.playerError != null) { /* Show error message */ }
+        when {
+            playerError != null -> {
+                Text(
+                    text = "Error playing video: ${playerError?.message?.take(100)}",
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            playerState == Player.STATE_BUFFERING -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            playerState == Player.STATE_ENDED && exoPlayer.repeatMode == Player.REPEAT_MODE_OFF -> {
+                 // Optionally show something when video ends and not looping, though current setup loops
+            }
+        }
 
         // Debug overlay (optional)
-        // Text("Vid: ${mediaItem.id}", color = Color.White.copy(alpha = 0.7f), modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp))
+        // Text("Vid: ${mediaItem.id} State: $playerState Error: ${playerError != null}", color = Color.White.copy(alpha = 0.7f), modifier = Modifier.align(Alignment.BottomStart).padding(4.dp))
     }
 }

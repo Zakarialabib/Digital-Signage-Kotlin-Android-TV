@@ -13,6 +13,9 @@ import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.core.data.model.Content
 import com.signagepro.app.core.data.model.ContentType
+import com.signagepro.app.core.data.model.Content.Image
+import com.signagepro.app.core.data.model.Content.Video
+import com.signagepro.app.core.data.model.Content.Playlist
 import com.signagepro.app.features.display.manager.CacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -183,12 +186,12 @@ class ContentRepositoryImpl @Inject constructor(
             createSampleVideo("vid1")
         )
         
-        val dummyPlaylist = Playlist(
+        val dummyPlaylist = Content.Playlist(
             id = playlistId,
             name = "Default Playlist",
             description = "Default playlist for testing",
-            items = items,
-            isActive = true
+            items = items
+            // Relying on default values for other Content.Playlist fields like duration, currentItemIndex, loopMode etc.
         )
         emit(Result.Success(dummyPlaylist))
     }

@@ -27,12 +27,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
-        return context.getSharedPreferences(Constants.SHARED_PREFS_NAME, Context.MODE_PRIVATE)
-    }
-
-    @Provides
-    @Singleton
     fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
         return WorkManager.getInstance(context)
     }
@@ -67,4 +61,4 @@ object AppModule {
     fun provideSharedPrefsManager(@ApplicationContext context: Context): SharedPrefsManager {
         return SharedPrefsManager(context)
     }
-} 
+}

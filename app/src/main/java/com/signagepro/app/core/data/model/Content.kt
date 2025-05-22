@@ -103,6 +103,50 @@ sealed class Content {
     ) : Content() {
         override val type: ContentType = ContentType.LIVE_STREAM
     }
+
+    @Serializable
+    data class Html(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val htmlContent: String, // Can be inline HTML or a URL to a .html file
+        val baseUrl: String? = null, // For resolving relative paths if htmlContent is inline
+        override val duration: Int = 30,
+        val metadata: Map<String, String> = emptyMap(),
+        override val lastAccessed: Long = System.currentTimeMillis()
+    ) : Content() {
+        override val type: ContentType = ContentType.HTML
+    }
+
+    @Serializable
+    data class WebPage(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val url: String, // Similar to Web, but explicitly for a full webpage render
+        override val duration: Int = 30,
+        val enableJavaScript: Boolean = true,
+        val userAgent: String? = null,
+        val metadata: Map<String, String> = emptyMap(),
+        override val lastAccessed: Long = System.currentTimeMillis()
+    ) : Content() {
+        override val type: ContentType = ContentType.WEBPAGE
+    }
+
+    @Serializable
+    data class Playlist(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val items: List<Content>,
+        override val duration: Int = 0, // Duration might be sum of items or fixed, 0 for dynamic
+        val currentItemIndex: Int = 0,
+        val loopMode: PlaylistLoopMode = PlaylistLoopMode.NONE,
+        override val lastAccessed: Long = System.currentTimeMillis(),
+        val metadata: Map<String, String> = emptyMap()
+    ) : Content() {
+        override val type: ContentType = ContentType.PLAYLIST
+    }
 }
 
 @Serializable
@@ -156,6 +200,13 @@ enum class ImageScaleType {
     FIT_CENTER,
     CENTER_CROP,
     FILL_BOUNDS
+}
+
+@Serializable
+enum class PlaylistLoopMode {
+    NONE, // Play once
+    LOOP_LIST, // Loop entire list
+    LOOP_ITEM // Loop current item (less common for playlist, more for single content)
 }
 
 @Serializable
