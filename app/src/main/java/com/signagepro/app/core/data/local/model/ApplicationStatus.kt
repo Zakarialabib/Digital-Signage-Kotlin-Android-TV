@@ -3,7 +3,7 @@ package com.signagepro.app.core.data.local.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ApplicationStatus(
+data class ApplicationStatusEntity(
     val isRegistered: Boolean = false,
     val deviceId: String? = null,
     val lastSyncTimestamp: Long = 0L,

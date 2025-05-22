@@ -3,7 +3,7 @@ package com.signagepro.app.di
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.work.WorkManager
-import com.signagepro.app.core.data.local.SharedPrefsManager
+import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.repository.PlaylistRepositoryImpl
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.utils.CoroutineDispatchers
@@ -20,10 +20,23 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
+import okhttp3.OkHttpClient
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences(SharedPreferencesManager.PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferencesManager(sharedPreferences: SharedPreferences): SharedPreferencesManager {
+        return SharedPreferencesManager(sharedPreferences)
+    }
 
     @Provides
     @Singleton
@@ -51,14 +64,8 @@ object AppModule {
     @Singleton
     fun provideCacheManager(
         @ApplicationContext context: Context, 
-        okHttpClient: okhttp3.OkHttpClient
+        okHttpClient: OkHttpClient
     ): CacheManager {
         return ContentCacheManager(context, okHttpClient)
-    }
-    
-    @Provides
-    @Singleton
-    fun provideSharedPrefsManager(@ApplicationContext context: Context): SharedPrefsManager {
-        return SharedPrefsManager(context)
     }
 }

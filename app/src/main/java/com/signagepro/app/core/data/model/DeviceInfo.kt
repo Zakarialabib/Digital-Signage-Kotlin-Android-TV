@@ -2,8 +2,6 @@ package com.signagepro.app.core.data.model
 
 import kotlinx.serialization.Serializable
 
-// DeviceRegistrationRequest and DeviceRegistrationResponse moved to NetworkDtos.kt
-
 @Serializable
 data class DeviceInfo(
     val deviceId: String,
@@ -15,4 +13,4 @@ data class DeviceInfo(
     val screenResolution: String, // e.g., "1920x1080"
     val ipAddress: String?,
     val macAddress: String?
-)
+) 

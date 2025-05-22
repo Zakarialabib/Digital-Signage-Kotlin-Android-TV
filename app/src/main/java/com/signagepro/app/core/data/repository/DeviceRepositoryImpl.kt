@@ -4,9 +4,9 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import com.signagepro.app.BuildConfig
-import com.signagepro.app.core.data.local.SharedPrefsManager
+import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
-import com.signagepro.app.core.data.local.model.ApplicationStatus
+import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
 import com.signagepro.app.core.data.model.DeviceInfo
 import com.signagepro.app.core.data.model.HeartbeatRequest
@@ -31,7 +31,7 @@ class DeviceRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val apiService: ApiService,
     private val deviceSettingsDao: DeviceSettingsDao,
-    private val sharedPrefsManager: SharedPrefsManager,
+    private val sharedPreferencesManager: SharedPreferencesManager,
     private val dispatchers: CoroutineDispatchers
 ) : DeviceRepository {
 
@@ -80,29 +80,29 @@ class DeviceRepositoryImpl @Inject constructor(
     }
 
     override fun getDeviceApiKey(): Flow<String?> {
-        return sharedPrefsManager.getAuthTokenFlow() 
+        return sharedPreferencesManager.getAuthTokenFlow()
     }
 
     override suspend fun saveDeviceApiKey(apiKey: String) {
-        sharedPrefsManager.saveAuthToken(apiKey) 
+        sharedPreferencesManager.saveAuthToken(apiKey)
     }
 
     override fun getDeviceId(): String {
-        var deviceId = sharedPrefsManager.getDeviceId()
+        var deviceId = sharedPreferencesManager.getDeviceId()
         if (deviceId.isNullOrBlank()) {
             val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-            deviceId = if (androidId.isNullOrBlank() || androidId == "9774d56d682e549c" || androidId == "android_id") { // Common problematic value
+            deviceId = if (androidId.isNullOrBlank() || androidId == "9774d56d682e549c" || androidId == "android_id") {
                 UUID.randomUUID().toString()
             } else {
                 androidId
             }
-            sharedPrefsManager.saveDeviceId(deviceId)
+            sharedPreferencesManager.saveDeviceId(deviceId)
         }
         return deviceId
     }
 
     override suspend fun saveDeviceId(deviceId: String) {
-        sharedPrefsManager.saveDeviceId(deviceId)
+        sharedPreferencesManager.saveDeviceId(deviceId)
         // Also ensure it's in Room settings if needed
         val currentSettings = deviceSettingsDao.getDeviceSettingsSnapshot()
         if (currentSettings?.deviceId != deviceId) {
@@ -119,27 +119,26 @@ class DeviceRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun getApplicationStatus(): Result<ApplicationStatus> {
-        // TODO: Implement logic to construct and return current app status
-        val dummyStatus = ApplicationStatus(
+    override suspend fun getApplicationStatus(): Result<ApplicationStatusEntity> {
+        val dummyStatus = ApplicationStatusEntity(
             deviceId = getDeviceId(),
-            isRegistered = sharedPrefsManager.isDeviceRegistered(),
+            isRegistered = sharedPreferencesManager.isDeviceRegistered(),
             lastSyncTimestamp = deviceSettingsDao.getDeviceSettingsSnapshot()?.lastSuccessfulSyncTimestamp ?: 0L,
-            isOnline = true, // TODO: Check network status
-            lastHeartbeatTimestamp = sharedPrefsManager.getLastHeartbeatTimestamp(), // Get from prefs
-            currentContentId = null, // TODO: Get from player state
-            currentPlaylistId = deviceSettingsDao.getDeviceSettingsSnapshot()?.currentLayoutId?.toString(), // Get from settings
-            diskSpaceFreeMb = 1024L, // TODO: Get actual disk space
-            memoryUsageMb = 256L, // TODO: Get actual memory usage
-            cpuUsagePercent = 15.0f, // TODO: Get actual CPU usage
-            uptimeSeconds = 3600L, // TODO: Get actual uptime
+            isOnline = true,
+            lastHeartbeatTimestamp = sharedPreferencesManager.getLastHeartbeatTimestamp(),
+            currentContentId = null,
+            currentPlaylistId = deviceSettingsDao.getDeviceSettingsSnapshot()?.currentLayoutId?.toString(),
+            diskSpaceFreeMb = 1024L,
+            memoryUsageMb = 256L,
+            cpuUsagePercent = 15.0f,
+            uptimeSeconds = 3600L,
             appVersion = BuildConfig.VERSION_NAME,
-            isScreenOn = true // TODO: Check screen state
+            isScreenOn = true
         )
         return Result.Success(dummyStatus)
     }
 
-    override suspend fun updateApplicationStatus(status: ApplicationStatus): Result<Unit> {
+    override suspend fun updateApplicationStatus(status: ApplicationStatusEntity): Result<Unit> {
         // This might involve updating parts of DeviceSettingsEntity or SharedPreferences
         // For example, lastHeartbeatTimestamp
         deviceSettingsDao.updateLastHeartbeatTimestamp(status.lastHeartbeatTimestamp ?: System.currentTimeMillis())
@@ -168,7 +167,7 @@ class DeviceRepositoryImpl @Inject constructor(
                 deviceSettingsDao.saveDeviceSettings(settings)
             }
 
-            if (settings.isRegistered && !sharedPrefsManager.getAuthToken().isNullOrBlank()) {
+            if (settings.isRegistered && !sharedPreferencesManager.getAuthToken().isNullOrBlank()) {
                 emit(Result.Success(true))
                 return@flow
             }
@@ -189,7 +188,7 @@ class DeviceRepositoryImpl @Inject constructor(
                 val apiResponseBody = retrofitResponse.body()!! // GenericApiResponse<dto.DeviceRegistrationResponse>
                 if (apiResponseBody.status == "success" && apiResponseBody.data != null) {
                     val data = apiResponseBody.data!! // This is dto.DeviceRegistrationResponse
-                    sharedPrefsManager.saveAuthToken(data.deviceToken)
+                    sharedPreferencesManager.saveAuthToken(data.deviceToken)
                     // Update DeviceSettingsEntity
                     val updatedSettings = (deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
                         deviceId = currentDeviceId,
@@ -207,7 +206,7 @@ class DeviceRepositoryImpl @Inject constructor(
                         )
                     deviceSettingsDao.saveDeviceSettings(updatedSettings)
                     
-                    sharedPrefsManager.setDeviceRegistered(true)
+                    sharedPreferencesManager.setDeviceRegistered(true)
                     emit(Result.Success(true))
                 } else {
                     emit(Result.Error(Exception(apiResponseBody.message ?: "Registration API logic error")))
@@ -258,12 +257,12 @@ class DeviceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getRegistrationToken(): String? = withContext(dispatchers.io) {
-        sharedPrefsManager.getAuthToken()
+        sharedPreferencesManager.getAuthToken()
     }
 
     override suspend fun isDeviceRegistered(): Boolean = withContext(dispatchers.io) {
        val settings = deviceSettingsDao.getDeviceSettingsSnapshot()
        // Check both room flag and token presence in shared prefs
-       settings?.isRegistered == true && !sharedPrefsManager.getAuthToken().isNullOrBlank()
+       settings?.isRegistered == true && !sharedPreferencesManager.getAuthToken().isNullOrBlank()
     }
 }

@@ -89,6 +89,66 @@ sealed class Content {
     }
 
     @Serializable
+    data class Audio(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val url: String,
+        val localPath: String? = null,
+        val autoPlay: Boolean = true,
+        val loop: Boolean = false,
+        override val duration: Int = 0, // 0 means use audio's actual duration
+        val metadata: Map<String, String> = emptyMap(),
+        override val lastAccessed: Long = System.currentTimeMillis()
+    ) : Content() {
+        override val type: ContentType = ContentType.AUDIO
+    }
+
+    @Serializable
+    data class Html(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val htmlContent: String,
+        val baseUrl: String? = null,
+        override val duration: Int = 30,
+        val metadata: Map<String, String> = emptyMap(),
+        override val lastAccessed: Long = System.currentTimeMillis()
+    ) : Content() {
+        override val type: ContentType = ContentType.HTML
+    }
+
+    @Serializable
+    data class WebPage(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val url: String,
+        val enableJavaScript: Boolean = true,
+        val userAgent: String? = null,
+        override val duration: Int = 30,
+        val metadata: Map<String, String> = emptyMap(),
+        override val lastAccessed: Long = System.currentTimeMillis()
+    ) : Content() {
+        override val type: ContentType = ContentType.WEBPAGE
+    }
+
+    @Serializable
+    data class Carousel(
+        override val id: String,
+        override val name: String,
+        override val description: String? = null,
+        val items: List<Content>,
+        val transitionType: CarouselTransitionType = CarouselTransitionType.FADE,
+        val itemDuration: Int = 10, // Duration per item in seconds
+        override val duration: Int = 0, // 0 means loop indefinitely through all items
+        val metadata: Map<String, String> = emptyMap(),
+        override val lastAccessed: Long = System.currentTimeMillis()
+    ) : Content() {
+        override val type: ContentType = ContentType.CAROUSEL
+    }
+
+    @Serializable
     data class Playlist(
         override val id: String,
         override val name: String,
@@ -162,4 +222,11 @@ enum class PlaylistLoopMode {
     NONE, // Play once
     LOOP_LIST, // Loop entire list
     LOOP_ITEM // Loop current item
+}
+
+@Serializable
+enum class CarouselTransitionType {
+    FADE,
+    SLIDE_HORIZONTAL,
+    SLIDE_VERTICAL
 }

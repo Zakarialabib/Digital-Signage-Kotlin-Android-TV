@@ -2,7 +2,7 @@ package com.signagepro.app.features.splash.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.signagepro.app.core.data.local.SharedPrefsManager
+import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.repository.DeviceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ sealed class SplashDestination {
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
-    private val sharedPrefsManager: SharedPrefsManager
+    private val sharedPreferencesManager: SharedPreferencesManager
 ) : ViewModel() {
 
     private val _navigateTo = MutableStateFlow<SplashDestination>(SplashDestination.Undetermined)
@@ -44,7 +44,7 @@ class SplashViewModel @Inject constructor(
     }
 
     private fun shouldShowOnboarding(): Boolean {
-        return !sharedPrefsManager.isOnboardingCompleted()
+        return !sharedPreferencesManager.isOnboardingCompleted()
     }
 
     fun resetNavigation() {

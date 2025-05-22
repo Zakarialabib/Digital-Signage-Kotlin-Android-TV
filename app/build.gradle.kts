@@ -11,12 +11,12 @@ plugins {
 
 android {
     namespace = "com.signagepro.app"
-    compileSdk = 35
+    compileSdk = 34
     
     defaultConfig {
         applicationId = "com.signagepro.app"
         minSdk = 21
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -68,9 +68,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.48")
-    ksp("com.google.dagger:hilt-compiler:2.48")
-    implementation("androidx.hilt:hilt-work:1.0.0")
+    implementation("com.google.dagger:hilt-android:2.50")
+    ksp("com.google.dagger:hilt-compiler:2.50")
+    implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     // Navigation

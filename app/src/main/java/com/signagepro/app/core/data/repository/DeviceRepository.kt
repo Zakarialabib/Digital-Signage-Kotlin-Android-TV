@@ -6,7 +6,7 @@ import android.provider.Settings
 import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
-import com.signagepro.app.core.data.local.model.ApplicationStatus
+import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
 import com.signagepro.app.core.data.model.DeviceInfo
 import com.signagepro.app.core.data.model.HeartbeatRequest
@@ -67,12 +67,12 @@ interface DeviceRepository {
      /**
      * Retrieves the current application status locally.
      */
-    suspend fun getApplicationStatus(): com.signagepro.app.core.utils.Result<ApplicationStatus>
+    suspend fun getApplicationStatus(): com.signagepro.app.core.utils.Result<ApplicationStatusEntity>
 
     /**
      * Updates the local application status.
      */
-    suspend fun updateApplicationStatus(status: ApplicationStatus): com.signagepro.app.core.utils.Result<Unit>
+    suspend fun updateApplicationStatus(status: ApplicationStatusEntity): com.signagepro.app.core.utils.Result<Unit>
 
     suspend fun registerDeviceIfNeeded(): Flow<com.signagepro.app.core.utils.Result<Boolean>>
     fun getDeviceSettings(): Flow<DeviceSettingsEntity?>

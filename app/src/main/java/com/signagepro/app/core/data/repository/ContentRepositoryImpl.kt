@@ -12,6 +12,8 @@ import com.signagepro.app.core.network.dto.toEntity
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.core.data.model.Content
+import com.signagepro.app.core.data.model.CarouselTransitionType
+import com.signagepro.app.core.data.model.PlaylistLoopMode
 import com.signagepro.app.features.display.manager.CacheManager
 import com.signagepro.app.core.utils.CoroutineDispatchers
 import kotlinx.coroutines.Dispatchers
@@ -92,6 +94,34 @@ class ContentRepositoryImpl @Inject constructor(
         description = "A sample text for display",
         text = "Sample display text",
         duration = 10
+    )
+    
+    private fun createSampleHtml(id: String) = Content.Html(
+        id = id,
+        name = "Sample HTML",
+        description = "A sample HTML content for display",
+        htmlContent = "<html><body><h1>Sample HTML Content</h1><p>This is a test.</p></body></html>",
+        duration = 15
+    )
+    
+    private fun createSampleWebPage(id: String) = Content.WebPage(
+        id = id,
+        name = "Sample Web Page",
+        description = "A sample web page for display",
+        url = "https://example.com/page",
+        duration = 25
+    )
+    
+    private fun createSampleCarousel(id: String) = Content.Carousel(
+        id = id,
+        name = "Sample Carousel",
+        description = "A sample carousel with images",
+        items = listOf(
+            createSampleImage(id + "_img1"),
+            createSampleImage(id + "_img2")
+        ),
+        transitionType = CarouselTransitionType.FADE,
+        duration = 0
     )
 
     override suspend fun preloadPlaylistContent(playlist: Content.Playlist): Result<Unit> {

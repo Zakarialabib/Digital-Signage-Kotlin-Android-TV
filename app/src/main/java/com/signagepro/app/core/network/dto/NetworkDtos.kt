@@ -140,37 +140,3 @@ fun MediaItemDto.toEntity(): MediaItemEntity {
         // lastAccessed will use its default value System.currentTimeMillis()
     )
 }
-
-// --- Heartbeat and Commands (from ApplicationStatus.kt) --- //
-@Serializable
-data class HeartbeatRequestKtx(
-    val deviceId: String,
-    val timestamp: Long,
-    // Changed from ApplicationStatus to Map<String, String> for simplicity in DTO
-    // The full ApplicationStatus can be constructed or used on the domain layer if needed.
-    val currentStatus: Map<String, String> 
-)
-
-@Serializable
-data class HeartbeatResponseKtx(
-    val success: Boolean,
-    val nextHeartbeatIntervalSeconds: Int? = null,
-    val commands: List<DeviceCommandKtx>? = null
-)
-
-@Serializable
-sealed class DeviceCommandKtx {
-    abstract val commandId: String
-
-    @Serializable
-    data class RestartAppKtx(override val commandId: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class UpdateContentKtx(override val commandId: String, val playlistId: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class UpdateAppSettingsKtx(override val commandId: String, val settingsJson: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class TakeScreenshotKtx(override val commandId: String, val uploadUrl: String) : DeviceCommandKtx()
-}

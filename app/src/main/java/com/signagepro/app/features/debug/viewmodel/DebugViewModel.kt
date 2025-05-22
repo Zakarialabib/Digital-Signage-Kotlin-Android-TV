@@ -2,7 +2,7 @@ package com.signagepro.app.features.debug.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.signagepro.app.core.data.local.model.ApplicationStatus
+import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.repository.DeviceRepository
 import com.signagepro.app.core.data.repository.PlaylistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +17,7 @@ import javax.inject.Inject
  */
 sealed class DebugUiState {
     object Loading : DebugUiState()
-    data class Success(val appStatus: ApplicationStatus) : DebugUiState()
+    data class Success(val appStatus: ApplicationStatusEntity) : DebugUiState()
     data class Error(val message: String) : DebugUiState()
 }
 
