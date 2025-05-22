@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.signagepro.app.features.onboarding.viewmodel.OnboardingViewModel
+import com.signagepro.app.features.onboarding.viewmodel.OnboardingContent
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)

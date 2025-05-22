@@ -1,6 +1,7 @@
 package com.signagepro.app.core.data.repository
 
 import com.signagepro.app.core.data.local.model.MediaItemEntity
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +12,7 @@ data class Playlist(
     val id: String,
     val name: String,
     val description: String? = null,
-    val items: List<MediaItemEntity> = emptyList(),
+    val items: List<@Contextual MediaItemEntity> = emptyList(),
     val loopMode: String = "LOOP_LIST", // Options: NONE, LOOP_LIST, LOOP_ITEM
     val lastModified: Long = System.currentTimeMillis()
 ) 

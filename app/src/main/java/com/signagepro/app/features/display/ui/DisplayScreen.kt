@@ -62,7 +62,7 @@ fun DisplayScreen(
                 // Main content display area
                 if (currentMediaItem != null) {
                     // Render the appropriate content based on type
-                    RenderContent(currentMediaItem!!)
+                    RenderContent(content = currentMediaItem!!)
                     
                     // Optional debug overlay
                     /*
@@ -71,7 +71,7 @@ fun DisplayScreen(
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            "Layout: ${state.layout.layout.name}",
+                            "Layout: ${state.layoutWithMediaItems.layout.name}",
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 12.sp,
                             modifier = Modifier
@@ -83,31 +83,13 @@ fun DisplayScreen(
                 } else {
                     // No current item from PlaylistManager, or playlist is empty
                     Text(
-                        "Layout '${state.layout.layout.name}' is active, but no media items are available.",
+                        "Layout is active, but no media items are available.",
                         color = Color.Yellow,
                         fontSize = 18.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp)
                     )
                 }
-            }
-            is DisplayUiState.EmptyPlaylist -> {
-                Text(
-                    text = "The playlist is empty. Please add content to display.",
-                    color = Color.Yellow,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp),
-                    fontSize = 18.sp
-                )
-            }
-            is DisplayUiState.NoPlaylistAssigned -> {
-                Text(
-                    text = "No playlist has been assigned to this device.",
-                    color = Color.Yellow,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp),
-                    fontSize = 18.sp
-                )
             }
             is DisplayUiState.EmptyLayout -> {
                 Text(

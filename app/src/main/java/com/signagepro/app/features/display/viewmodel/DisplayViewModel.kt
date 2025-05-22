@@ -199,6 +199,33 @@ class DisplayViewModel @Inject constructor(
                                 } else {
                                     // Preload content in a separate coroutine
                                     viewModelScope.launch(dispatchers.io) { 
+                                        // Convert Content.Playlist to repository.Playlist before passing
+                                        val repoPlaylist = Playlist(
+                                            id = playlist.id,
+                                            name = playlist.name,
+                                            description = playlist.description,
+                                            items = playlist.items.map { content ->
+                                                // This is a simplification, you would need proper mapping
+                                                // from Content to MediaItemEntity
+                                                MediaItemEntity(
+                                                    id = content.id.toLongOrNull() ?: 0L,
+                                                    name = content.name,
+                                                    description = content.description,
+                                                    url = when (content) {
+                                                        is Content.Image -> content.url
+                                                        is Content.Video -> content.url
+                                                        is Content.Web -> content.url
+                                                        is Content.WebPage -> content.url
+                                                        is Content.Audio -> content.url
+                                                        is Content.LiveStream -> content.url
+                                                        else -> null
+                                                    },
+                                                    type = content.type.name.lowercase(),
+                                                    duration = content.duration,
+                                                    layoutId = 0L // Default layout ID
+                                                )
+                                            }
+                                        )
                                         contentRepository.preloadPlaylistContent(playlist) 
                                     }
                                     startContentCycle()
