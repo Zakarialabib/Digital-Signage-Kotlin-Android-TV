@@ -199,9 +199,7 @@ class DisplayViewModel @Inject constructor(
                                 } else {
                                     // Preload content in a separate coroutine
                                     viewModelScope.launch(dispatchers.io) { 
-                                        // Convert Content.Playlist to repository.Playlist first
-                                        val repoPlaylist = convertContentPlaylistToRepositoryPlaylist(playlist)
-                                        contentRepository.preloadPlaylistContent(repoPlaylist) 
+                                        contentRepository.preloadPlaylistContent(playlist) 
                                     }
                                     startContentCycle()
                                 }
@@ -298,16 +296,5 @@ class DisplayViewModel @Inject constructor(
                 Logger.e(e, "DisplayViewModel: Error during cleanup")
             }
         }
-    }
-
-    private fun convertContentPlaylistToRepositoryPlaylist(contentPlaylist: Content.Playlist): Playlist {
-        return Playlist(
-            id = contentPlaylist.id,
-            name = contentPlaylist.name,
-            description = contentPlaylist.description,
-            items = emptyList(), // We don't need to map the items for preloading
-            loopMode = "LOOP_LIST",
-            lastModified = contentPlaylist.lastAccessed
-        )
     }
 }
