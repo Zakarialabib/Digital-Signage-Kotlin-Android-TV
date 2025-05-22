@@ -13,6 +13,7 @@ import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.core.data.model.Content
 import com.signagepro.app.features.display.manager.CacheManager
+import com.signagepro.app.core.utils.CoroutineDispatchers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -28,7 +29,8 @@ class ContentRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val layoutDao: LayoutDao,
     private val mediaItemDao: MediaItemDao,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val dispatchers: CoroutineDispatchers
 ) : ContentRepository {
 
     override fun getPlaylist(playlistId: String): Flow<Result<Content.Playlist>> = flow {
@@ -102,7 +104,7 @@ class ContentRepositoryImpl @Inject constructor(
         return Result.Success(Unit)
     }
 
-    override suspend fun fetchAndCacheLayout(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
+    override suspend fun fetchAndCacheLayout(layoutId: String): Result<LayoutWithMediaItems> = withContext(dispatchers.io) {
         try {
             Logger.d("ContentRepository: Fetching layout $layoutId from API")
 
@@ -165,7 +167,7 @@ class ContentRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getCachedLayoutWithMediaItems(layoutId: String): Result<LayoutWithMediaItems> = withContext(Dispatchers.IO) {
+    override suspend fun getCachedLayoutWithMediaItems(layoutId: String): Result<LayoutWithMediaItems> = withContext(dispatchers.io) {
         try {
             val layoutIdL = layoutId.toLongOrNull()
                 ?: return@withContext Result.Error(IllegalArgumentException("Invalid layout ID format: $layoutId"))

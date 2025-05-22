@@ -8,6 +8,7 @@ import com.signagepro.app.core.data.local.model.MediaItemEntity
 import com.signagepro.app.core.data.repository.ContentRepository
 import com.signagepro.app.core.data.repository.DeviceRepository
 import com.signagepro.app.core.data.repository.Playlist
+import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.data.model.Content
 import com.signagepro.app.core.utils.Logger
 import com.signagepro.app.core.utils.Result
@@ -37,13 +38,14 @@ sealed class DisplayUiState {
 
 @HiltViewModel
 class DisplayViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle, // Make it private val if only used in init
+    private val savedStateHandle: SavedStateHandle,
     private val contentRepository: ContentRepository,
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
+    private val dispatchers: CoroutineDispatchers
 ) : ViewModel() {
 
     private val _layoutId = MutableStateFlow<String?>(savedStateHandle.get<String>("layoutId"))
-    // val layoutId: StateFlow<Long?> = _layoutId.asStateFlow() // Expose if needed by UI directly
+    val layoutId: StateFlow<String?> = _layoutId.asStateFlow() // Expose if needed by UI directly
 
     private val _uiState = MutableStateFlow<DisplayUiState>(DisplayUiState.Loading)
     val uiState: StateFlow<DisplayUiState> = _uiState.asStateFlow()
@@ -63,7 +65,7 @@ class DisplayViewModel @Inject constructor(
         }.launchIn(viewModelScope)
         
         // Load layout based on layoutId
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.io) {
             val layoutIdToUse = _layoutId.value ?: deviceRepository.getDeviceSettings().firstOrNull()?.currentLayoutId?.toString()
             
             if (layoutIdToUse.isNullOrBlank()) {
@@ -77,7 +79,7 @@ class DisplayViewModel @Inject constructor(
     }
 
     private fun loadLayout(layoutId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.io) {
             _uiState.value = DisplayUiState.Loading
             
             // Try to get cached layout first, then refresh if needed
@@ -115,9 +117,10 @@ class DisplayViewModel @Inject constructor(
         }
     }
     
-    private suspend fun fallbackToCachedLayout(layoutId: String) {
-        // Try to load directly from cache as fallback when network fails
-        when (val cacheResult = contentRepository.getCachedLayoutWithMediaItems(layoutId)) {
+    private fun fallbackToCachedLayout(layoutId: String) {
+        viewModelScope.launch(dispatchers.io) {
+            // Try to load directly from cache as fallback when network fails
+            when (val cacheResult = contentRepository.getCachedLayoutWithMediaItems(layoutId)) {
             is Result.Success -> {
                 val layoutWithItems = cacheResult.data
                 _uiState.value = DisplayUiState.Success(layoutWithMediaItems = layoutWithItems)
@@ -128,12 +131,13 @@ class DisplayViewModel @Inject constructor(
                 Logger.e(cacheResult.exception, "DisplayViewModel: Cache fallback also failed for layout $layoutId")
                 // State already set to Error from previous failure
             }
-            else -> {} // Ignore
+                else -> {} // Ignore
+            }
         }
     }
     
     private fun scheduleContentSync(layoutId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.io) {
             // Periodically refresh content (every 15 minutes)
             while (true) {
                 delay(15 * 60 * 1000) // 15 minutes
@@ -163,7 +167,7 @@ class DisplayViewModel @Inject constructor(
 
     fun loadInitialPlaylist(playlistIdFromArgs: String? = null) {
         _uiState.value = DisplayUiState.Loading
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.io) {
             // Determine which playlist to load: from args, or from device registration info, or a default
             val targetPlaylistId = playlistIdFromArgs 
                 ?: deviceRepository.getDeviceApiKey().firstOrNull()?.let { apiKey ->
@@ -194,7 +198,7 @@ class DisplayViewModel @Inject constructor(
                                     _uiState.value = DisplayUiState.EmptyLayout
                                 } else {
                                     // Preload content in a separate coroutine
-                                    viewModelScope.launch { 
+                                    viewModelScope.launch(dispatchers.io) { 
                                         contentRepository.preloadPlaylistContent(playlist) 
                                     }
                                     startContentCycle()
