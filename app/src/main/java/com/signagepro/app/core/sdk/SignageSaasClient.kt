@@ -5,7 +5,7 @@ import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.model.DeviceRegistration
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
-import com.signagepro.app.core.network.dto.HeartbeatRequest
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -56,15 +56,12 @@ class SignageSaasClient @Inject constructor(
         }
     }
 
-    suspend fun sendHeartbeat(deviceId: String, layoutId: Long?, appVersion: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun sendHeartbeat(deviceId: String, layoutId: Long?, appVersion: String, ipAddress: String?, metrics: HeartbeatMetrics?): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val request = HeartbeatRequest(
-                deviceId = deviceId,
-                timestamp = java.time.Instant.now().toString(),
+            val request = HeartbeatRequestV2(
                 status = "online",
-                currentLayoutId = layoutId,
-                currentMediaId = null,
-                appVersion = appVersion
+                ip_address = ipAddress,
+                metrics = metrics
             )
             val response = apiService.sendHeartbeat(request)
             if (response.isSuccessful) {
@@ -72,6 +69,25 @@ class SignageSaasClient @Inject constructor(
                 Result.Success(Unit)
             } else {
                 Result.Error(Exception(response.errorBody()?.string() ?: "Heartbeat failed"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    suspend fun sendDeviceSpecificHeartbeat(deviceId: String, ipAddress: String?, metrics: HeartbeatMetrics?): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val request = HeartbeatRequestV2(
+                status = "online",
+                ip_address = ipAddress,
+                metrics = metrics
+            )
+            val response = apiService.sendDeviceHeartbeat(deviceId, request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                prefs.saveLastHeartbeatTimestamp(System.currentTimeMillis())
+                Result.Success(Unit)
+            } else {
+                Result.Error(Exception(response.errorBody()?.string() ?: "Device specific heartbeat failed"))
             }
         } catch (e: Exception) {
             Result.Error(e)

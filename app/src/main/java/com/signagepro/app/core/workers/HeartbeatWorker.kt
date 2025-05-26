@@ -7,7 +7,8 @@ import androidx.work.WorkerParameters
 import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.network.ApiService
-import com.signagepro.app.core.network.dto.HeartbeatRequest
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2
+import com.signagepro.app.core.network.dto.HeartbeatMetrics
 import com.signagepro.app.core.utils.Logger
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -37,27 +38,23 @@ class HeartbeatWorker @AssistedInject constructor(
                 return Result.success() // Or Result.failure() if this should stop retries
             }
 
-            val isoTimestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-                timeZone = TimeZone.getTimeZone("UTC")
-            }.format(Date())
+            val metrics = HeartbeatMetrics(cpu = null, memory = null, storage = null) // Placeholder for metrics
 
-            val request = HeartbeatRequest(
-                deviceId = settings.deviceId!!,
-                timestamp = isoTimestamp,
+            val request = HeartbeatRequestV2(
                 status = "online", // Basic status, could be more dynamic later
-                currentLayoutId = settings.currentLayoutId,
-                currentMediaId = null, // TODO: This needs to be tracked by the display engine
-                appVersion = BuildConfig.VERSION_NAME
+                ip_address = null, // TODO: Get current IP address if available and needed
+                metrics = metrics
             )
 
-            val response = apiService.sendHeartbeat(request)
-            return if (response.isSuccessful) {
+            val response = apiService.sendDeviceHeartbeat(settings.deviceId!!, request)
+
+            if (response.isSuccessful && response.body()?.success == true) {
                 deviceSettingsDao.updateLastHeartbeatTimestamp(System.currentTimeMillis())
                 Logger.i("HeartbeatWorker: Heartbeat successful.")
-                Result.success()
+                return Result.success()
             } else {
                 Logger.e("HeartbeatWorker: Heartbeat failed. Code: ${response.code()}, Message: ${response.errorBody()?.string()}")
-                Result.retry()
+                return Result.retry()
             }
         } catch (e: Exception) {
             Logger.e(e, "HeartbeatWorker: Exception during heartbeat.")

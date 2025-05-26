@@ -36,7 +36,7 @@ interface ApiService {
     // For now, explicit deviceId is fine for MVP, assuming token handles auth.
 
     @POST(Constants.ENDPOINT_HEARTBEAT)
-    suspend fun sendHeartbeat(@Body request: HeartbeatRequest): Response<SimpleSuccessResponse>
+    suspend fun sendHeartbeat(@Body request: HeartbeatRequestV2): Response<SimpleSuccessResponse>
 
     // AUTHENTICATE
     @POST(Constants.ENDPOINT_AUTHENTICATE)

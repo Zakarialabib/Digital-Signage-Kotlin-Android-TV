@@ -19,7 +19,7 @@ import com.signagepro.app.features.display.ui.DisplayScreen
 import com.signagepro.app.features.display.viewmodel.DisplayViewModel
 import com.signagepro.app.features.registration.ui.RegistrationScreen
 import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
-import com.signagepro.app.features.splash.ui.SplashScreen 
+import com.signagepro.app.features.splash.ui.SplashScreen
 import com.signagepro.app.features.splash.viewmodel.SplashDestination
 import com.signagepro.app.features.splash.viewmodel.SplashViewModel
 import com.signagepro.app.features.settings.ui.SettingsScreen
@@ -97,6 +97,14 @@ fun AppNavigation(
                     // when registration is successful. We'll navigate from here.
                     navController.navigate(createDisplayRoute("default_layout")) {
                         popUpTo(Screen.Registration.route) { inclusive = true }
+                    }
+                },
+                onSkipToDemo = {
+                    // TODO: Implement actual navigation to a Demo Screen or demo mode
+                    // For now, let's navigate to a hypothetical "Demo" route
+                    // You might want to create a Screen.Demo route and a DemoScreen composable
+                    navController.navigate("demo_screen_route") { // Replace with actual demo route
+                         popUpTo(Screen.Registration.route) { inclusive = true }
                     }
                 }
             )
