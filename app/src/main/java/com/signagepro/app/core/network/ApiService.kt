@@ -22,6 +22,9 @@ import com.signagepro.app.core.network.dto.ContentDto
 import com.signagepro.app.core.network.dto.ScreenDto
 import com.signagepro.app.core.network.dto.MediaItemDto
 import com.signagepro.app.core.network.dto.UpdateInfoDto
+import com.signagepro.app.core.sync.ContentManifest
+import okhttp3.ResponseBody
+import retrofit2.http.*
 
 interface ApiService {
 
@@ -100,4 +103,19 @@ interface ApiService {
 
     // Add other endpoints as defined in 05_Backend_API_Contract.md when needed
     // e.g., for downloading media, reporting playback stats, fetching schedules etc.
+
+    @GET("devices/{deviceId}/content/manifest")
+    suspend fun getContentManifest(
+        @Path("deviceId") deviceId: String
+    ): ContentManifest
+
+    @GET("content/{contentId}/download")
+    suspend fun getContentDownloadUrl(
+        @Path("contentId") contentId: String
+    ): String
+
+    @GET
+    suspend fun downloadContent(
+        @Url url: String
+    ): ResponseBody
 } 
