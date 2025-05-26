@@ -1,11 +1,12 @@
 package com.signagepro.app.core.sdk
 
 import android.content.Context
+import android.os.Build
+import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.model.DeviceRegistration
 import com.signagepro.app.core.network.ApiService
-import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
-import com.signagepro.app.core.network.dto.HeartbeatRequestV2
+import com.signagepro.app.core.network.dto.*
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -56,17 +57,54 @@ class SignageSaasClient @Inject constructor(
         }
     }
 
-    suspend fun sendHeartbeat(deviceId: String, layoutId: Long?, appVersion: String, ipAddress: String?, metrics: HeartbeatMetrics?): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun authenticate(hardwareId: String, tenantId: String): Result<AuthResponse> = withContext(Dispatchers.IO) {
+        try {
+            val request = AuthRequest(
+                hardware_id = hardwareId,
+                tenant_id = tenantId
+            )
+            val response = apiService.authenticate(request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                response.body()?.let { authResponse ->
+                    prefs.saveAuthToken(authResponse.token)
+                    prefs.saveDeviceId(authResponse.device_id)
+                    prefs.setDeviceRegistered(true)
+                    Result.Success(authResponse)
+                } ?: Result.Error(Exception("Empty response body"))
+            } else {
+                Result.Error(Exception(response.errorBody()?.string() ?: "Authentication failed"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    suspend fun sendHeartbeat(
+        deviceId: String,
+        ipAddress: String,
+        metrics: HeartbeatMetrics,
+        screenStatus: ScreenStatus,
+        storageInfo: StorageInfo,
+        networkInfo: NetworkInfo
+    ): Result<HeartbeatResponseV2> = withContext(Dispatchers.IO) {
         try {
             val request = HeartbeatRequestV2(
                 status = "online",
                 ip_address = ipAddress,
-                metrics = metrics
+                metrics = metrics,
+                app_version = BuildConfig.VERSION_NAME,
+                screen_status = screenStatus,
+                storage_info = storageInfo,
+                network_info = networkInfo,
+                system_info = SystemInfo(
+                    os_version = Build.VERSION.RELEASE,
+                    model = Build.MODEL
+                )
             )
-            val response = apiService.sendHeartbeat(request)
-            if (response.isSuccessful) {
+            val response = apiService.sendDeviceHeartbeat(deviceId, request)
+            if (response.isSuccessful && response.body()?.success == true) {
                 prefs.saveLastHeartbeatTimestamp(System.currentTimeMillis())
-                Result.Success(Unit)
+                Result.Success(response.body()!!)
             } else {
                 Result.Error(Exception(response.errorBody()?.string() ?: "Heartbeat failed"))
             }
@@ -75,19 +113,39 @@ class SignageSaasClient @Inject constructor(
         }
     }
 
-    suspend fun sendDeviceSpecificHeartbeat(deviceId: String, ipAddress: String?, metrics: HeartbeatMetrics?): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun syncContent(deviceId: String): Result<List<ContentDto>> = withContext(Dispatchers.IO) {
         try {
-            val request = HeartbeatRequestV2(
-                status = "online",
-                ip_address = ipAddress,
-                metrics = metrics
-            )
-            val response = apiService.sendDeviceHeartbeat(deviceId, request)
-            if (response.isSuccessful && response.body()?.success == true) {
-                prefs.saveLastHeartbeatTimestamp(System.currentTimeMillis())
-                Result.Success(Unit)
+            val response = apiService.syncContent(deviceId)
+            if (response.isSuccessful && response.body()?.status == "success") {
+                Result.Success(response.body()?.data ?: emptyList())
             } else {
-                Result.Error(Exception(response.errorBody()?.string() ?: "Device specific heartbeat failed"))
+                Result.Error(Exception(response.errorBody()?.string() ?: "Content sync failed"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    suspend fun downloadMedia(deviceId: String, contentId: String): Result<MediaItemDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.downloadMedia(deviceId, contentId)
+            if (response.isSuccessful && response.body()?.status == "success") {
+                Result.Success(response.body()?.data ?: throw Exception("No media data received"))
+            } else {
+                Result.Error(Exception(response.errorBody()?.string() ?: "Media download failed"))
+            }
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    suspend fun checkForUpdates(deviceId: String): Result<UpdateInfoDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.checkForUpdates(deviceId)
+            if (response.isSuccessful && response.body()?.status == "success") {
+                Result.Success(response.body()?.data ?: throw Exception("No update info received"))
+            } else {
+                Result.Error(Exception(response.errorBody()?.string() ?: "Update check failed"))
             }
         } catch (e: Exception) {
             Result.Error(e)
@@ -100,7 +158,7 @@ class SignageSaasClient @Inject constructor(
     fun clearSession() = prefs.clear()
 
     class Builder(private val context: Context) {
-        private var baseUrl: String = "https://test.signagesaas.test/api/v1/"
+        private var baseUrl: String = "https://signagesaas.test/api/v1/"
         private var prefs: SharedPreferencesManager? = null
         private var apiService: ApiService? = null
 

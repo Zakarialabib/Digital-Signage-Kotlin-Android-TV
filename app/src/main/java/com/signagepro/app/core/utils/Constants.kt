@@ -5,7 +5,7 @@ object Constants {
     const val SHARED_PREFS_NAME = "SignageProPrefs"
 
     // Networking
-    const val BASE_URL = "https://test.signagesaas.test/api/v1/" 
+    const val BASE_URL = "https://signagesaas.test/api/v1/" 
     const val CONNECT_TIMEOUT_SECONDS = 30L
     const val READ_TIMEOUT_SECONDS = 30L
     const val WRITE_TIMEOUT_SECONDS = 30L

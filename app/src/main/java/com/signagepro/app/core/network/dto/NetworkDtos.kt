@@ -8,38 +8,58 @@ import com.signagepro.app.core.data.local.model.MediaItemEntity
 // --- AUTHENTICATION --- //
 data class AuthRequest(
     val hardware_id: String,
-    val name: String,
-    val type: String,
-    val ip_address: String,
-    val screen_resolution: String,
-    val os_version: String,
-    val app_version: String
+    val tenant_id: String
 )
 
 data class AuthResponse(
     val success: Boolean,
-    val token: String?,
-    val device_id: String?,
-    val timestamp: String?
+    val token: String,
+    val device_id: String,
+    val timestamp: String
 )
 
-// --- HEARTBEAT V2 --- //
+// --- HEARTBEAT --- //
 data class HeartbeatMetrics(
-    val cpu: Int?,
-    val memory: Int?,
-    val storage: Int?
+    val cpu_usage: Double,
+    val memory_usage: Double,
+    val uptime: Long
+)
+
+data class ScreenStatus(
+    val power: String, // "on" or "off"
+    val brightness: Int
+)
+
+data class StorageInfo(
+    val total: Long,
+    val free: Long
+)
+
+data class NetworkInfo(
+    val type: String,
+    val signal_strength: Int
+)
+
+data class SystemInfo(
+    val os_version: String,
+    val model: String
 )
 
 data class HeartbeatRequestV2(
-    val status: String,
-    val ip_address: String?,
-    val metrics: HeartbeatMetrics?
+    val status: String, // "online" or "offline"
+    val ip_address: String,
+    val metrics: HeartbeatMetrics,
+    val app_version: String,
+    val screen_status: ScreenStatus,
+    val storage_info: StorageInfo,
+    val network_info: NetworkInfo,
+    val system_info: SystemInfo
 )
 
 data class HeartbeatResponseV2(
     val success: Boolean,
-    val timestamp: String?,
-    val needs_sync: Boolean?
+    val timestamp: String,
+    val needs_sync: Boolean
 )
 
 // --- CONTENT --- //

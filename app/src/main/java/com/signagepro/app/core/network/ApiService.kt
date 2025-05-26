@@ -20,6 +20,8 @@ import com.signagepro.app.core.network.dto.HeartbeatRequestV2
 import com.signagepro.app.core.network.dto.HeartbeatResponseV2
 import com.signagepro.app.core.network.dto.ContentDto
 import com.signagepro.app.core.network.dto.ScreenDto
+import com.signagepro.app.core.network.dto.MediaItemDto
+import com.signagepro.app.core.network.dto.UpdateInfoDto
 
 interface ApiService {
 
@@ -39,13 +41,13 @@ interface ApiService {
     suspend fun sendHeartbeat(@Body request: HeartbeatRequestV2): Response<SimpleSuccessResponse>
 
     // AUTHENTICATE
-    @POST(Constants.ENDPOINT_AUTHENTICATE)
+    @POST("/api/device/authenticate")
     suspend fun authenticate(@Body request: AuthRequest): Response<AuthResponse>
 
     // DEVICE HEARTBEAT (with deviceId in path)
-    @POST("device/heartbeat/{deviceId}")
+    @POST("/api/device/heartbeat/{device}")
     suspend fun sendDeviceHeartbeat(
-        @Path("deviceId") deviceId: String,
+        @Path("device") deviceId: String,
         @Body request: HeartbeatRequestV2
     ): Response<HeartbeatResponseV2>
 
@@ -80,6 +82,21 @@ interface ApiService {
 
     @DELETE("screens/{id}")
     suspend fun deleteScreen(@Path("id") id: String): Response<SimpleSuccessResponse>
+
+    // Content Sync
+    @GET("/api/device/sync/{device}")
+    suspend fun syncContent(@Path("device") deviceId: String): Response<GenericApiResponse<List<ContentDto>>>
+
+    // Media Download
+    @GET("/api/device/media/{device}/{content}")
+    suspend fun downloadMedia(
+        @Path("device") deviceId: String,
+        @Path("content") contentId: String
+    ): Response<GenericApiResponse<MediaItemDto>>
+
+    // OTA Updates
+    @GET("/api/device/download/{device}")
+    suspend fun checkForUpdates(@Path("device") deviceId: String): Response<GenericApiResponse<UpdateInfoDto>>
 
     // Add other endpoints as defined in 05_Backend_API_Contract.md when needed
     // e.g., for downloading media, reporting playback stats, fetching schedules etc.
