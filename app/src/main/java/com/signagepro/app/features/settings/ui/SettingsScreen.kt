@@ -1,5 +1,6 @@
 package com.signagepro.app.features.settings.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -7,7 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.signagepro.app.R
 import com.signagepro.app.ui.components.*
 import com.signagepro.app.features.settings.viewmodel.SettingsViewModel
 
@@ -27,6 +31,16 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Logo Section
+        Image(
+            painter = painterResource(id = R.drawable.app_logo),
+            contentDescription = "SignagePro Logo",
+            modifier = Modifier
+                .size(80.dp)
+                .padding(bottom = 16.dp),
+            contentScale = ContentScale.Fit
+        )
+
         Text(
             text = "Settings",
             style = MaterialTheme.typography.headlineLarge,
