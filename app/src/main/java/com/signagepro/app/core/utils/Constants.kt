@@ -5,7 +5,7 @@ object Constants {
     const val SHARED_PREFS_NAME = "SignageProPrefs"
 
     // Networking
-    const val BASE_URL = "https://your.laravel.backend.api/v1/" // Placeholder, replace with actual URL from secured config
+    const val BASE_URL = "https://test.signagesaas.test/api/v1/" 
     const val CONNECT_TIMEOUT_SECONDS = 30L
     const val READ_TIMEOUT_SECONDS = 30L
     const val WRITE_TIMEOUT_SECONDS = 30L
@@ -16,6 +16,9 @@ object Constants {
     const val ENDPOINT_DEVICE_LAYOUT = "device/{deviceId}/layout"
     const val ENDPOINT_HEARTBEAT = "device/heartbeat"
     const val ENDPOINT_LOGS = "device/logs"
+    const val ENDPOINT_AUTHENTICATE = "authenticate"
+    const val ENDPOINT_CONTENT = "content"
+    const val ENDPOINT_SCREENS = "screens"
 
     // Other app-wide constants
     const val MAX_CACHE_SIZE_MB = 200L

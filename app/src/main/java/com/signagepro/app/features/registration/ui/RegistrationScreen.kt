@@ -28,7 +28,8 @@ import com.signagepro.app.core.utils.Logger
 @Composable
 fun RegistrationScreen(
     viewModel: RegistrationViewModel = hiltViewModel(),
-    onRegistrationSuccess: () -> Unit
+    onRegistrationSuccess: () -> Unit,
+    onSkipToDemo: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val deviceId by viewModel.deviceId.collectAsState()
@@ -126,6 +127,17 @@ fun RegistrationScreen(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { onSkipToDemo() },
+                modifier = Modifier.fillMaxWidth(0.8f).height(48.dp),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Text("Skip to Demo")
+            }
         }
     }
 }

@@ -153,9 +153,9 @@ fun RenderContent(mediaItem: MediaItemEntity) {
             "video" -> {
                 VideoRenderer(mediaItem = mediaItem)
             }
-            "web" -> {
-                WebRenderer(mediaItem = mediaItem)
-            }
+            // "web" -> {
+            //     WebRenderer(mediaItem = mediaItem)
+            // }
             else -> {
                 // Fallback for unknown types
                 Text(

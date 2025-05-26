@@ -5,6 +5,66 @@ import kotlinx.serialization.Serializable // Added for kotlinx.serialization DTO
 import com.signagepro.app.core.data.local.model.LayoutEntity
 import com.signagepro.app.core.data.local.model.MediaItemEntity
 
+// --- AUTHENTICATION --- //
+data class AuthRequest(
+    val hardware_id: String,
+    val name: String,
+    val type: String,
+    val ip_address: String,
+    val screen_resolution: String,
+    val os_version: String,
+    val app_version: String
+)
+
+data class AuthResponse(
+    val success: Boolean,
+    val token: String?,
+    val device_id: String?,
+    val timestamp: String?
+)
+
+// --- HEARTBEAT V2 --- //
+data class HeartbeatMetrics(
+    val cpu: Int?,
+    val memory: Int?,
+    val storage: Int?
+)
+
+data class HeartbeatRequestV2(
+    val status: String,
+    val ip_address: String?,
+    val metrics: HeartbeatMetrics?
+)
+
+data class HeartbeatResponseV2(
+    val success: Boolean,
+    val timestamp: String?,
+    val needs_sync: Boolean?
+)
+
+// --- CONTENT --- //
+data class ContentDto(
+    val id: String?,
+    val name: String?,
+    val type: String?,
+    val content_data: Map<String, Any>?,
+    val duration: Int?,
+    val order: Int?,
+    val settings: Map<String, Any>?,
+    val rendered_html: String?,
+    val media_url: String?
+)
+
+// --- SCREENS --- //
+data class ScreenDto(
+    val screen_id: String?,
+    val screen_name: String?,
+    val resolution: String?,
+    val orientation: String?,
+    val settings: Map<String, Any>?,
+    val contents: List<ContentDto>?
+)
+
 // --- Registration --- //
 data class DeviceRegistrationRequest(
     @SerializedName("device_id") val deviceId: String, // Unique hardware ID
@@ -70,26 +130,6 @@ data class LayoutDto(
     @SerializedName("items") val items: List<MediaItemDto>
 )
 
-// --- Heartbeat --- //
-data class HeartbeatRequest(
-    @SerializedName("device_id") val deviceId: String,
-    @SerializedName("timestamp") val timestamp: String, // ISO 8601 UTC timestamp
-    @SerializedName("status") val status: String, // e.g., "playing", "idle", "error"
-    @SerializedName("current_layout_id") val currentLayoutId: Long?,
-    @SerializedName("current_media_id") val currentMediaId: Long?,
-    @SerializedName("app_version") val appVersion: String,
-    @SerializedName("error_message") val errorMessage: String? = null
-)
-
-// Mapper functions
-fun LayoutDto.toEntity(): LayoutEntity {
-    return LayoutEntity(
-        id = this.id,
-        name = this.name
-        // lastSyncTimestamp will use its default value System.currentTimeMillis()
-    )
-}
-
 // --- Heartbeat and Commands (from ApplicationStatus.kt) --- //
 @Serializable
 data class HeartbeatRequestKtx(
@@ -138,5 +178,14 @@ fun MediaItemDto.toEntity(): MediaItemEntity {
         checksum = this.checksum,
         displayUrl = this.url
         // lastAccessed will use its default value System.currentTimeMillis()
+    )
+}
+
+// Mapper functions
+fun LayoutDto.toEntity(): LayoutEntity {
+    return LayoutEntity(
+        id = this.id,
+        name = this.name
+        // lastSyncTimestamp will use its default value System.currentTimeMillis()
     )
 }
