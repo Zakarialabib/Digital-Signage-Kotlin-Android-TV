@@ -18,6 +18,7 @@ fun SettingsScreen(
 ) {
     var showConfirmDialog by remember { mutableStateOf(false) }
     var selectedSetting by remember { mutableStateOf<SettingType?>(null) }
+    var confirmAction by remember { mutableStateOf<ConfirmAction?>(null) }
 
     Column(
         modifier = modifier
@@ -29,6 +30,13 @@ fun SettingsScreen(
         Text(
             text = "Settings",
             style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Text(
+            text = "Configure your device settings",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
@@ -43,7 +51,8 @@ fun SettingsScreen(
                 ) {
                     Text(
                         text = settingType.description,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     when (settingType) {
@@ -71,8 +80,16 @@ fun SettingsScreen(
                         SettingType.SYSTEM -> {
                             SystemSettings(
                                 viewModel = viewModel,
-                                onRestart = { selectedSetting = SettingType.SYSTEM; showConfirmDialog = true },
-                                onReset = { selectedSetting = SettingType.SYSTEM; showConfirmDialog = true }
+                                onRestart = { 
+                                    selectedSetting = SettingType.SYSTEM
+                                    confirmAction = ConfirmAction.RESTART
+                                    showConfirmDialog = true 
+                                },
+                                onReset = { 
+                                    selectedSetting = SettingType.SYSTEM
+                                    confirmAction = ConfirmAction.RESET
+                                    showConfirmDialog = true 
+                                }
                             )
                         }
                     }
@@ -85,13 +102,22 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
             title = { Text("Confirm Action") },
-            text = { Text("Are you sure you want to ${selectedSetting?.actionText}?") },
+            text = { 
+                Text(
+                    when (confirmAction) {
+                        ConfirmAction.RESTART -> "Are you sure you want to restart the device? This will temporarily interrupt content display."
+                        ConfirmAction.RESET -> "Are you sure you want to reset to factory settings? This will erase all settings and content."
+                        null -> ""
+                    }
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        when (selectedSetting) {
-                            SettingType.SYSTEM -> viewModel.restartDevice()
-                            else -> {}
+                        when (confirmAction) {
+                            ConfirmAction.RESTART -> viewModel.restartDevice()
+                            ConfirmAction.RESET -> viewModel.resetToFactory()
+                            null -> {}
                         }
                         showConfirmDialog = false
                     }
@@ -118,6 +144,12 @@ private fun DisplaySettings(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Text(
+            text = "Adjust display settings to optimize content visibility",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
         Text("Brightness: ${viewModel.brightness}%")
         Slider(
             value = viewModel.brightness.toFloat(),
@@ -148,7 +180,17 @@ private fun NetworkSettings(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Text(
+            text = "Configure network settings for content delivery",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
         // WiFi Settings
+        Text(
+            text = "WiFi Settings",
+            style = MaterialTheme.typography.titleSmall
+        )
         SignageProTextField(
             value = viewModel.wifiSettings.ssid,
             onValueChange = { onWifiChange(viewModel.wifiSettings.copy(ssid = it)) },
@@ -160,7 +202,13 @@ private fun NetworkSettings(
             label = "WiFi Password"
         )
 
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
+
         // Proxy Settings
+        Text(
+            text = "Proxy Settings",
+            style = MaterialTheme.typography.titleSmall
+        )
         SignageProTextField(
             value = viewModel.proxySettings.host,
             onValueChange = { onProxyChange(viewModel.proxySettings.copy(host = it)) },
@@ -184,6 +232,12 @@ private fun SyncSettings(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Text(
+            text = "Configure content synchronization settings",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
         Text("Sync Interval: ${viewModel.syncInterval} minutes")
         Slider(
             value = viewModel.syncInterval.toFloat(),
@@ -214,6 +268,12 @@ private fun SystemSettings(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Text(
+            text = "Manage device system settings and maintenance",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
         SignageProButton(
             text = "Restart Device",
             onClick = onRestart
@@ -247,6 +307,11 @@ enum class SettingType(
         "Manage device system settings and maintenance.",
         "perform this action"
     )
+}
+
+enum class ConfirmAction {
+    RESTART,
+    RESET
 }
 
 data class WifiSettings(

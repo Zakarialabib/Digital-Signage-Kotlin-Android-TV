@@ -47,6 +47,14 @@ fun RegistrationScreen(
             text = "Welcome to SignagePro",
             style = MaterialTheme.typography.headlineLarge,
             textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Text(
+            text = "Digital Signage Solution",
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
@@ -58,6 +66,12 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Text(
+                    text = "Enter your device registration details below. You can find these in your SignagePro dashboard.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
                 SignageProTextField(
                     value = tenantId,
                     onValueChange = { tenantId = it },
@@ -94,6 +108,18 @@ fun RegistrationScreen(
                     isLoading = viewModel.registrationState is RegistrationState.Loading
                 )
 
+                Divider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
+                Text(
+                    text = "Want to try before registering?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 SignageProOutlinedButton(
                     text = "Try Demo Mode",
                     onClick = onSkipToDemo
@@ -101,12 +127,21 @@ fun RegistrationScreen(
             }
         }
 
-        Text(
-            text = "Need help? Contact your administrator for registration details.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 16.dp)
-        )
+        Column(
+            modifier = Modifier.padding(top = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Need help?",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Contact your administrator for registration details or visit our documentation.",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
