@@ -3,15 +3,15 @@
     <!-- Base application theme -->
     <style name="Theme.SignagePro" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryContainer">@color/primary_dark</item>
+        <item name="android:colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="colorSecondaryVariant">@color/secondary_dark</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="android:colorSecondary">@color/secondary</item>
+        <item name="android:colorSecondaryContainer">@color/secondary_dark</item>
+        <item name="android:colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
         <!-- Enable window content transitions -->
         <item name="android:windowActivityTransitions">true</item>
         <!-- Enable edge-to-edge -->
