@@ -2,8 +2,9 @@ package com.signagepro.app.features.splash.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.signagepro.app.core.data.local.SharedPreferencesManager
-import com.signagepro.app.core.data.repository.DeviceRepository
+import com.signagepro.app.core.data.repository.AppPreferencesRepository
+import com.signagepro.app.core.data.repository.DeviceSettingsRepository
+import kotlinx.coroutines.flow.firstOrNull
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +22,8 @@ sealed class SplashDestination {
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    val deviceRepository: DeviceRepository,
-    private val sharedPreferencesManager: SharedPreferencesManager
+    val deviceSettingsRepository: DeviceSettingsRepository, // Changed from deviceRepository
+    private val appPreferencesRepository: AppPreferencesRepository // Changed from sharedPreferencesManager
 ) : ViewModel() {
 
     private val _navigateTo = MutableStateFlow<SplashDestination>(SplashDestination.Undetermined)
@@ -31,22 +32,28 @@ class SplashViewModel @Inject constructor(
     fun decideNextScreen() {
         viewModelScope.launch {
             try {
-                val isRegistered = deviceRepository.isDeviceRegistered()
+                // Check for registration token or device ID to determine if registered
+                val registrationToken = appPreferencesRepository.getRegistrationToken()
+                val deviceId = deviceSettingsRepository.getDeviceId().firstOrNull() // Assuming getDeviceId() returns a Flow
+
+                val isRegistered = !registrationToken.isNullOrBlank() && !deviceId.isNullOrBlank()
+                
+                val onboardingCompleted = appPreferencesRepository.isOnboardingCompleted().firstOrNull() ?: false
+
                 _navigateTo.value = when {
-                    !isRegistered -> SplashDestination.InitialChoice // Changed line
-                    shouldShowOnboarding() -> SplashDestination.Onboarding
+                    !isRegistered -> SplashDestination.InitialChoice
+                    !onboardingCompleted -> SplashDestination.Onboarding // Check onboarding status from AppPreferencesRepository
                     else -> SplashDestination.Display
                 }
             } catch (e: Exception) {
-                // If there's an error checking registration, default to initial choice flow
-                _navigateTo.value = SplashDestination.InitialChoice // Changed line
+                // Log the exception e.g. logger.e("Error deciding next screen", e)
+                _navigateTo.value = SplashDestination.InitialChoice 
             }
         }
     }
 
-    private fun shouldShowOnboarding(): Boolean {
-        return !sharedPreferencesManager.isOnboardingCompleted()
-    }
+    // Removed shouldShowOnboarding as it's now integrated into decideNextScreen
+    // and uses appPreferencesRepository
 
     fun resetNavigation() {
         _navigateTo.value = SplashDestination.Undetermined

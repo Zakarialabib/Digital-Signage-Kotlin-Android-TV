@@ -2,6 +2,8 @@ package com.signagepro.app.core.sync
 
 import android.content.Context
 import com.signagepro.app.core.logging.DiagnosticLogger
+import com.signagepro.app.core.logging.LogLevel
+import com.signagepro.app.core.logging.ContentSyncResult
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.security.SecureStorage
 import com.signagepro.app.core.utils.BandwidthThrottler
@@ -37,8 +39,8 @@ class ContentSyncManager @Inject constructor(
     private val _processedItems = MutableStateFlow(0)
     val processedItems: StateFlow<Int> = _processedItems
     
-    private val _syncResult = MutableStateFlow<ContentSyncResult?>(null)
-    val syncResult: StateFlow<ContentSyncResult?> = _syncResult
+    private val _syncResult = MutableStateFlow<com.signagepro.app.core.sync.ContentSyncResult?>(null)
+    val syncResult: StateFlow<com.signagepro.app.core.sync.ContentSyncResult?> = _syncResult
 
     init {
         contentDir.mkdirs()
@@ -148,14 +150,22 @@ class ContentSyncManager @Inject constructor(
 
                 // Log sync results
                 val duration = System.currentTimeMillis() - startTime
-                val result = ContentSyncResult(
+                val result = com.signagepro.app.core.logging.ContentSyncResult(
                     newContentCount = newContentCount,
                     updatedContentCount = updatedContentCount,
                     deletedContentCount = deletedContentCount,
                     totalSize = totalSize,
                     duration = duration
                 )
-                _syncResult.value = result
+                _syncResult.value = com.signagepro.app.core.sync.ContentSyncResult(
+                    newContentCount = newContentCount,
+                    updatedContentCount = updatedContentCount,
+                    deletedContentCount = deletedContentCount,
+                    totalSize = totalSize,
+                    duration = duration,
+                    success = true, // Assuming success if no major error
+                    errorMessage = null
+                )
                 diagnosticLogger.logContentSync(result)
 
             } catch (e: Exception) {
@@ -198,4 +208,4 @@ class ContentSyncManager @Inject constructor(
     fun clearContent() {
         contentDir.listFiles()?.forEach { it.delete() }
     }
-} 
+}

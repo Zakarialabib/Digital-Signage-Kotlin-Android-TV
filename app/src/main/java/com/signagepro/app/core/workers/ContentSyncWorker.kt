@@ -10,6 +10,7 @@ import com.signagepro.app.core.data.local.entity.ContentEntity
 import com.signagepro.app.core.logging.DiagnosticLogger
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.sync.ContentSyncManager
+import com.signagepro.app.core.logging.LogLevel
 import com.signagepro.app.core.utils.Result
 import com.signagepro.app.core.data.local.model.LayoutWithMediaItems
 import dagger.assisted.Assisted

@@ -22,18 +22,32 @@ fun RegistrationScreen(
     modifier: Modifier = Modifier
 ) {
     var tenantId by remember { mutableStateOf("") }
-    var hardwareId by remember { mutableStateOf("") }
+    var deviceName by remember { mutableStateOf("") } // Changed from hardwareId to deviceName
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(viewModel.registrationState) {
-        when (viewModel.registrationState) {
+    val registrationState by viewModel.uiState.collectAsState() // Collect uiState
+
+    LaunchedEffect(registrationState) { // Observe the collected state
+        when (val state = registrationState) {
             is RegistrationState.Success -> onRegistrationSuccess()
             is RegistrationState.Error -> {
                 isError = true
-                errorMessage = (viewModel.registrationState as RegistrationState.Error).message
+                errorMessage = state.message
             }
-            else -> {}
+            is RegistrationState.Idle -> {
+                isError = false
+                errorMessage = null
+            }
+            is RegistrationState.Loading -> {
+                isError = false // Clear previous errors when loading
+                errorMessage = null
+            }
+            is RegistrationState.Registered -> {
+                // This case might also trigger onRegistrationSuccess or navigate elsewhere
+                // For now, let's assume onRegistrationSuccess handles it.
+                onRegistrationSuccess()
+            }
         }
     }
 
@@ -92,11 +106,11 @@ fun RegistrationScreen(
                 )
 
                 SignageProTextField(
-                    value = hardwareId,
-                    onValueChange = { hardwareId = it },
-                    label = "Hardware ID",
-                    isError = isError && hardwareId.isBlank(),
-                    errorMessage = if (isError && hardwareId.isBlank()) "Hardware ID is required" else null
+                    value = deviceName,
+                    onValueChange = { deviceName = it },
+                    label = "Device Name", // Changed label
+                    isError = isError && deviceName.isBlank(),
+                    errorMessage = if (isError && deviceName.isBlank()) "Device Name is required" else null
                 )
 
                 if (isError && errorMessage != null) {
@@ -114,9 +128,9 @@ fun RegistrationScreen(
                     onClick = {
                         isError = false
                         errorMessage = null
-                        viewModel.registerDevice(tenantId, hardwareId)
+                        viewModel.registerDevice(tenantId, deviceName) // Pass deviceName
                     },
-                    isLoading = viewModel.registrationState is RegistrationState.Loading
+                    isLoading = registrationState is RegistrationState.Loading // Use collected state
                 )
             }
         }

@@ -80,7 +80,7 @@ fun AppNavigation(
                         }
                     }
                     SplashDestination.Display -> {
-                        val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
+                        val deviceSettings = splashViewModel.deviceSettingsRepository.getDeviceSettings().firstOrNull() // Changed to deviceSettingsRepository
                         val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                         
                         navController.navigate(createDisplayRoute(currentLayoutId)) {
@@ -96,14 +96,18 @@ fun AppNavigation(
 
         composable(Screen.Registration.route) {
             val registrationViewModel = hiltViewModel<RegistrationViewModel>()
+            val coroutineScope = rememberCoroutineScope() // Add coroutineScope here
             
             RegistrationScreen(
                 viewModel = registrationViewModel,
                 onRegistrationSuccess = { 
-                    // This is a callback that will be invoked by the Registration screen
-                    // when registration is successful. We'll navigate from here.
-                    navController.navigate(createDisplayRoute("default_layout")) {
-                        popUpTo(Screen.Registration.route) { inclusive = true }
+                    coroutineScope.launch {
+                        // After successful registration, fetch the latest settings to get the layout
+                        val deviceSettings = registrationViewModel.deviceSettingsRepository.getDeviceSettings().firstOrNull()
+                        val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
+                        navController.navigate(createDisplayRoute(currentLayoutId)) {
+                            popUpTo(Screen.Registration.route) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -116,7 +120,7 @@ fun AppNavigation(
             OnboardingScreen(
                 onComplete = {
                     coroutineScope.launch {
-                        val deviceSettings = splashViewModel.deviceRepository.getDeviceSettings().firstOrNull()
+                        val deviceSettings = splashViewModel.deviceSettingsRepository.getDeviceSettings().firstOrNull() // Changed to deviceSettingsRepository
                         val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
                         navController.navigate(createDisplayRoute(currentLayoutId)) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }

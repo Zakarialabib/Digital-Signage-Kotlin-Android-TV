@@ -1,78 +1,82 @@
 package com.signagepro.app.features.registration.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.signagepro.app.core.data.repository.DeviceRepository
-import com.signagepro.app.core.utils.Result // Assuming Result wrapper from previous steps
-import com.signagepro.app.core.utils.Logger
+import com.signagepro.app.core.data.repository.DeviceSettingsRepository
+import com.signagepro.app.core.data.repository.AppPreferencesRepository
+import com.signagepro.app.core.network.ApiService // Assuming registration happens via API
+import com.signagepro.app.core.network.dto.RegistrationRequest // Create this DTO
+import com.signagepro.app.core.network.dto.RegistrationResponse // Create this DTO
+import com.signagepro.app.core.logging.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-sealed class RegistrationUiState {
-    object Idle : RegistrationUiState()
-    object Loading : RegistrationUiState()
-    data class Success(val message: String?) : RegistrationUiState()
-    data class Error(val message: String) : RegistrationUiState()
-    data class DisplayDeviceId(val deviceId: String) : RegistrationUiState()
-}
-
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val deviceRepository: DeviceRepository
+    private val deviceSettingsRepository: DeviceSettingsRepository,
+    private val appPreferencesRepository: AppPreferencesRepository, // For storing registration token, etc.
+    private val apiService: ApiService,
+    private val logger: Logger
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<RegistrationUiState>(RegistrationUiState.Idle)
-    val uiState: StateFlow<RegistrationUiState> = _uiState.asStateFlow()
-
-    private val _deviceId = MutableStateFlow<String?>(null)
-    val deviceId: StateFlow<String?> = _deviceId.asStateFlow()
+    var registrationState by mutableStateOf<RegistrationState>(RegistrationState.Idle)
+        private set
 
     init {
-        loadDeviceId()
+        checkIfAlreadyRegistered()
     }
 
-    private fun loadDeviceId() {
+    private fun checkIfAlreadyRegistered() {
         viewModelScope.launch {
-            // DeviceRepository.getDeviceId() is now synchronous
-            val id = deviceRepository.getDeviceId()
-            _deviceId.value = id
-            _uiState.value = RegistrationUiState.DisplayDeviceId(id)
+            val settings = deviceSettingsRepository.getDeviceSettings()
+            if (settings.isRegistered && settings.deviceId != "NOT_REGISTERED") {
+                registrationState = RegistrationState.Registered
+                logger.i("Device is already registered with ID: ${settings.deviceId}")
+            } else {
+                registrationState = RegistrationState.Idle
+            }
         }
     }
 
-    fun attemptRegistration() {
-        val currentDeviceId = _deviceId.value
-        if (currentDeviceId == null) {
-            _uiState.value = RegistrationUiState.Error("Device ID not available. Cannot register.")
+    fun registerDevice(tenantId: String, hardwareId: String) {
+        if (tenantId.isBlank() || hardwareId.isBlank()) {
+            registrationState = RegistrationState.Error("Tenant ID and Hardware ID cannot be empty.")
             return
         }
 
-        _uiState.value = RegistrationUiState.Loading
+        registrationState = RegistrationState.Loading
         viewModelScope.launch {
-            deviceRepository.registerDeviceIfNeeded()
-                .onEach { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            _uiState.value = RegistrationUiState.Success("Device registered successfully!")
-                            // Navigation will be handled by the screen observing this state
-                        }
-                        is Result.Error -> {
-                            val errorMsg = result.exception.message ?: "An unknown registration error occurred"
-                            _uiState.value = RegistrationUiState.Error(errorMsg)
-                            Logger.e(result.exception, "Registration failed: $errorMsg")
-                        }
-                        is Result.Loading -> {
-                            _uiState.value = RegistrationUiState.Loading
-                        }
-                    }
+            try {
+                logger.i("Attempting device registration with Tenant ID: $tenantId, Hardware ID: $hardwareId")
+                // In a real scenario, you might get a unique hardware ID from the system
+                // For now, we use the one provided by the user or a default one.
+                val currentSettings = deviceSettingsRepository.getDeviceSettings()
+                val actualHardwareId = if (hardwareId.isNotEmpty()) hardwareId else currentSettings.deviceId // Or generate a new one
+
+                val request = RegistrationRequest(tenantId = tenantId, hardwareId = actualHardwareId, deviceName = "SignagePro Device") // Add other relevant fields
+                val response = apiService.registerDevice(request) // Ensure this suspend fun exists in ApiService
+
+                if (response.success && response.data != null) {
+                    val deviceId = response.data.deviceId
+                    val regToken = response.data.registrationToken
+                    deviceSettingsRepository.updateDeviceId(deviceId, true)
+                    deviceSettingsRepository.updateTenantId(tenantId) // Add this to DeviceSettingsRepository & Entity
+                    appPreferencesRepository.saveRegistrationToken(regToken) // Add this to AppPreferencesRepository
+                    registrationState = RegistrationState.Success(deviceId, regToken)
+                    logger.i("Device registered successfully. Device ID: $deviceId")
+                } else {
+                    val errorMessage = response.message ?: "Registration failed. Please check details and try again."
+                    registrationState = RegistrationState.Error(errorMessage)
+                    logger.w("Registration failed: $errorMessage")
                 }
-                .launchIn(viewModelScope)
+            } catch (e: Exception) {
+                logger.e("Registration exception: ${e.message}", e)
+                registrationState = RegistrationState.Error("An error occurred during registration: ${e.message}")
+            }
         }
     }
 }
