@@ -19,7 +19,6 @@ import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
 fun RegistrationScreen(
     viewModel: RegistrationViewModel,
     onRegistrationSuccess: () -> Unit,
-    onSkipToDemo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var tenantId by remember { mutableStateOf("") }
@@ -118,23 +117,6 @@ fun RegistrationScreen(
                         viewModel.registerDevice(tenantId, hardwareId)
                     },
                     isLoading = viewModel.registrationState is RegistrationState.Loading
-                )
-
-                Divider(
-                    modifier = Modifier.padding(vertical = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-
-                Text(
-                    text = "Want to try before registering?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                SignageProOutlinedButton(
-                    text = "Try Demo Mode",
-                    onClick = onSkipToDemo
                 )
             }
         }

@@ -13,6 +13,8 @@ sealed class Screen(val route: String) {
     object LayoutEditor : Screen("layout_editor")
     object DeviceInfo : Screen("device_info")
     object NetworkSettings : Screen("network_settings")
+    object Demo : Screen("demo_screen")
+    object InitialChoice : Screen("initial_choice_screen") // Added line
     
     // You can add more screens as needed for your application
     // For example:
