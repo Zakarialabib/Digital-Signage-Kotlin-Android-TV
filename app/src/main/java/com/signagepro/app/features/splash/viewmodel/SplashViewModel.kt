@@ -15,6 +15,7 @@ sealed class SplashDestination {
     object Registration : SplashDestination()
     object Onboarding : SplashDestination()
     object Display : SplashDestination()
+    object InitialChoice : SplashDestination() // New line
     object Undetermined : SplashDestination()
 }
 
@@ -32,13 +33,13 @@ class SplashViewModel @Inject constructor(
             try {
                 val isRegistered = deviceRepository.isDeviceRegistered()
                 _navigateTo.value = when {
-                    !isRegistered -> SplashDestination.Registration
+                    !isRegistered -> SplashDestination.InitialChoice // Changed line
                     shouldShowOnboarding() -> SplashDestination.Onboarding
                     else -> SplashDestination.Display
                 }
             } catch (e: Exception) {
-                // If there's an error checking registration, default to registration flow
-                _navigateTo.value = SplashDestination.Registration
+                // If there's an error checking registration, default to initial choice flow
+                _navigateTo.value = SplashDestination.InitialChoice // Changed line
             }
         }
     }

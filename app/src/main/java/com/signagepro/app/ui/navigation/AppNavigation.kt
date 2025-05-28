@@ -35,6 +35,8 @@ import com.signagepro.app.features.device.viewmodel.DeviceInfoViewModel
 import com.signagepro.app.features.network.ui.NetworkSettingsScreen
 import com.signagepro.app.features.network.viewmodel.NetworkSettingsViewModel
 import com.signagepro.app.features.onboarding.ui.OnboardingScreen
+import com.signagepro.app.features.demo.ui.DemoScreen // Added import
+import com.signagepro.app.features.choice.ui.InitialChoiceScreen // New import
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -62,6 +64,11 @@ fun AppNavigation(
 
             LaunchedEffect(splashDestination) {
                 when (splashDestination) {
+                    SplashDestination.InitialChoice -> { // New case
+                        navController.navigate(Screen.InitialChoice.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
                     SplashDestination.Registration -> {
                         navController.navigate(Screen.Registration.route) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
@@ -97,14 +104,6 @@ fun AppNavigation(
                     // when registration is successful. We'll navigate from here.
                     navController.navigate(createDisplayRoute("default_layout")) {
                         popUpTo(Screen.Registration.route) { inclusive = true }
-                    }
-                },
-                onSkipToDemo = {
-                    // TODO: Implement actual navigation to a Demo Screen or demo mode
-                    // For now, let's navigate to a hypothetical "Demo" route
-                    // You might want to create a Screen.Demo route and a DemoScreen composable
-                    navController.navigate("demo_screen_route") { // Replace with actual demo route
-                         popUpTo(Screen.Registration.route) { inclusive = true }
                     }
                 }
             )
@@ -167,6 +166,25 @@ fun AppNavigation(
         composable(Screen.NetworkSettings.route) {
             val networkSettingsViewModel: NetworkSettingsViewModel = hiltViewModel()
             NetworkSettingsScreen(viewModel = networkSettingsViewModel)
+        }
+
+        composable(Screen.Demo.route) { // Added DemoScreen composable
+            DemoScreen()
+        }
+
+        composable(Screen.InitialChoice.route) { // New composable
+            InitialChoiceScreen(
+                onNavigateToRegistration = {
+                    navController.navigate(Screen.Registration.route) {
+                        popUpTo(Screen.InitialChoice.route) { inclusive = true }
+                    }
+                },
+                onNavigateToDemo = {
+                    navController.navigate(Screen.Demo.route) {
+                        popUpTo(Screen.InitialChoice.route) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
