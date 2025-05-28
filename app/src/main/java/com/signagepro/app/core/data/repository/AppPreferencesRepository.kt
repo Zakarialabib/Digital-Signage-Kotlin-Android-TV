@@ -77,7 +77,7 @@ class AppPreferencesRepository @Inject constructor(
         }
     }
 
-    suspend funsetOnboardingCompleted(completed: Boolean) {
+    suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit {
             it[PreferencesKeys.ONBOARDING_COMPLETED] = completed
         }
