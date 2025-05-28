@@ -86,9 +86,9 @@ class SignageSaasClient @Inject constructor(
         screenStatus: ScreenStatus,
         storageInfo: StorageInfo,
         networkInfo: NetworkInfo
-    ): Result<HeartbeatResponseV2> = withContext(Dispatchers.IO) {
+    ): Result<HeartbeatResponse> = withContext(Dispatchers.IO) {
         try {
-            val request = HeartbeatRequestV2(
+            val request = HeartbeatRequest(
                 status = "online",
                 ip_address = ipAddress,
                 metrics = metrics,

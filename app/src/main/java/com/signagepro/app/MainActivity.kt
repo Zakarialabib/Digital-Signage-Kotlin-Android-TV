@@ -11,7 +11,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.signagepro.app.ui.navigation.AppNavigation
-import com.signagepro.app.ui.theme.SignageProTVTheme
+import com.signagepro.app.ui.theme.SignageProTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            SignageProTVTheme {
+            SignageProTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color.Black // Default background for TV

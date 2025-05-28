@@ -47,7 +47,7 @@ class HeartbeatWorker @AssistedInject constructor(
                 uptime = System.currentTimeMillis() / 1000 // Convert to seconds
             )
 
-            val request = HeartbeatRequestV2(
+            val request = HeartbeatRequest(
                 status = "online",
                 ip_address = NetworkUtils.getLocalIpAddress(),
                 metrics = metrics,

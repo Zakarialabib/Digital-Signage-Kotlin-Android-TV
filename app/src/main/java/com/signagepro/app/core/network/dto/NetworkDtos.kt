@@ -45,7 +45,7 @@ data class SystemInfo(
     val model: String
 )
 
-data class HeartbeatRequestV2(
+data class HeartbeatRequest(
     val status: String, // "online" or "offline"
     val ip_address: String,
     val metrics: HeartbeatMetrics,
@@ -56,7 +56,7 @@ data class HeartbeatRequestV2(
     val system_info: SystemInfo
 )
 
-data class HeartbeatResponseV2(
+data class HeartbeatResponse(
     val success: Boolean,
     val timestamp: String,
     val needs_sync: Boolean
