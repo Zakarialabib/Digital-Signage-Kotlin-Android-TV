@@ -10,7 +10,7 @@ import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
-import com.signagepro.app.core.network.dto.DeviceInfo
+// Removed single DeviceInfo import, Aliases will be added below
 import com.signagepro.app.core.network.dto.HeartbeatRequestV2
 import com.signagepro.app.core.network.dto.HeartbeatResponseV2
 import com.signagepro.app.core.network.ApiService
@@ -32,6 +32,10 @@ import java.util.Collections
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+
+// Import Aliases
+import com.signagepro.app.core.data.model.DeviceInfo as DomainDeviceInfo
+import com.signagepro.app.core.network.dto.DeviceInfo as NetworkDeviceInfo
 
 @Singleton
 class DeviceRepositoryImpl @Inject constructor(
@@ -66,21 +70,32 @@ class DeviceRepositoryImpl @Inject constructor(
         return kotlinx.coroutines.flow.flowOf(Result.Success(dummyDtoResponse))
     }
 
-    override fun getDeviceInfo(): Flow<Result<com.signagepro.app.core.network.dto.DeviceInfo>> {
-        // TODO: Implement logic to gather actual device info (Build class, etc.)
-        val dummyInfo = com.signagepro.app.core.network.dto.DeviceInfo(
-            deviceId = getDeviceId(), // Use actual fetched/generated device ID
+    override fun getDeviceInfo(): Flow<Result<DomainDeviceInfo>> {
+        val networkInfo = NetworkDeviceInfo(
+            deviceId = getDeviceId(),
             deviceName = "${Build.MANUFACTURER} ${Build.MODEL}",
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
             osVersion = Build.VERSION.RELEASE,
             appVersion = BuildConfig.VERSION_NAME,
-            screenResolution = "1920x1080", // TODO: Get actual screen resolution
-            ipAddress = "10.0.2.15", // TODO: Get actual IP
-            macAddress = "02:00:00:00:00:00", // TODO: Get actual MAC
+            screenResolution = getScreenResolution(context),
+            ipAddress = getIpAddress(),
+            macAddress = getMacAddress(),
             sdkVersion = Build.VERSION.SDK_INT.toString()
         )
-        return kotlinx.coroutines.flow.flowOf(Result.Success(dummyInfo))
+        val domainInfo = DomainDeviceInfo(
+            deviceId = networkInfo.deviceId,
+            deviceName = networkInfo.deviceName,
+            model = networkInfo.model,
+            manufacturer = networkInfo.manufacturer,
+            osVersion = networkInfo.osVersion,
+            appVersion = networkInfo.appVersion,
+            screenResolution = networkInfo.screenResolution,
+            ipAddress = networkInfo.ipAddress,
+            macAddress = networkInfo.macAddress,
+            sdkVersion = networkInfo.sdkVersion
+        )
+        return kotlinx.coroutines.flow.flowOf(Result.Success(domainInfo))
     }
 
     override suspend fun sendHeartbeat(request: HeartbeatRequestV2): Flow<Result<HeartbeatResponseV2>> {
@@ -221,18 +236,18 @@ class DeviceRepositoryImpl @Inject constructor(
             val appVersion = BuildConfig.VERSION_NAME
             val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
 
-            // Create device info object
-            val deviceInfo = DeviceInfo(
+            // Construct NetworkDeviceInfo for the registration request
+            val networkDeviceInfoForRegistration = NetworkDeviceInfo(
                 deviceId = currentDeviceId,
                 deviceName = deviceName,
                 model = Build.MODEL,
                 manufacturer = Build.MANUFACTURER,
                 osVersion = Build.VERSION.RELEASE,
                 sdkVersion = Build.VERSION.SDK_INT.toString(),
-                appVersion = appVersion,
+                appVersion = appVersion, // appVersion is already defined in this method's scope
                 screenResolution = getScreenResolution(context),
-                ipAddress = getIpAddress(), // Assuming getIpAddress() is available or will be added
-                macAddress = getMacAddress() // Assuming getMacAddress() is available or will be added
+                ipAddress = getIpAddress(),
+                macAddress = getMacAddress()
             )
 
             // Create the registration request
@@ -243,7 +258,7 @@ class DeviceRepositoryImpl @Inject constructor(
                 deviceType = "android_player",
                 appVersion = appVersion,
                 tenantId = sharedPreferencesManager.getTenantId(),
-                deviceInfo = deviceInfo
+                deviceInfo = networkDeviceInfoForRegistration // Assign the NetworkDeviceInfo instance
             )
 
             val retrofitResponse = apiService.registerDevice(requestDto)
