@@ -34,48 +34,48 @@ fun SyncProgressScreen(
         )
 
         SignageProCard(
-            title = "Content Synchronization", // Added title
-            modifier = Modifier.padding(16.dp),
-            content = { // Ensure content lambda is correctly passed
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                if (currentItem != null) {
                     Text(
                         text = "Current Item: $currentItem",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
+                }
 
-                    LinearProgressIndicator(
-                        progress = progress,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                    )
+                LinearProgressIndicator(
+                    progress = progress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                )
 
-                    Text(
-                        text = "Progress: $processedItems / $totalItems items",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                Text(
+                    text = "Progress: $processedItems / $totalItems items",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
 
-                    if (syncResult != null) {
-                        SyncResultSummary(syncResult)
-                    }
+                if (syncResult != null) {
+                    SyncResultSummary(syncResult)
+                }
 
-                    Button(
-                        onClick = onCancel,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp)
-                    ) {
-                        Text("Cancel Sync")
-                    }
+                Button(
+                    onClick = onCancel,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Text("Cancel Sync")
                 }
             }
-        )
+        }
     }
 }
 
@@ -118,4 +118,4 @@ private fun formatDuration(millis: Long): String {
     val minutes = seconds / 60
     val remainingSeconds = seconds % 60
     return String.format("%d:%02d", minutes, remainingSeconds)
-}
+} 

@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.signagepro.app.ui.theme.SignageProTheme // Assuming this is your app's theme
+import com.signagepro.app.ui.theme.SignageProTVTheme // Assuming this is your app's theme
 
 @Composable
 fun InitialChoiceScreen(
@@ -62,7 +62,7 @@ fun InitialChoiceScreen(
 @Preview(showBackground = true, device = "id:tv_1080p") // Preview for TV
 @Composable
 fun PreviewInitialChoiceScreen() {
-    SignageProTheme {
+    SignageProTVTheme {
         InitialChoiceScreen(
             onNavigateToRegistration = {},
             onNavigateToDemo = {}

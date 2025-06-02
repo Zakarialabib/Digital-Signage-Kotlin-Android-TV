@@ -3,6 +3,7 @@ package com.signagepro.app.core.network
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
 import com.signagepro.app.core.network.dto.GenericApiResponse
+import com.signagepro.app.core.network.dto.HeartbeatRequest
 import com.signagepro.app.core.network.dto.LayoutDto
 import com.signagepro.app.core.network.dto.SimpleSuccessResponse
 import com.signagepro.app.core.utils.Constants
@@ -15,8 +16,8 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import com.signagepro.app.core.network.dto.AuthRequest
 import com.signagepro.app.core.network.dto.AuthResponse
-import com.signagepro.app.core.network.dto.HeartbeatRequest // Will be updated to the correct structure
-import com.signagepro.app.core.network.dto.HeartbeatResponse
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2
+import com.signagepro.app.core.network.dto.HeartbeatResponseV2
 import com.signagepro.app.core.network.dto.ContentDto
 import com.signagepro.app.core.network.dto.ScreenDto
 import com.signagepro.app.core.network.dto.MediaItemDto
@@ -27,8 +28,8 @@ import retrofit2.http.*
 
 interface ApiService {
 
-    @POST(Constants.ENDPOINT_REGISTER_DEVICE) // Ensure this constant points to the correct V2 endpoint, e.g., "/api/v2/device/register"
-    suspend fun registerDevice(@Body request: DeviceRegistrationRequest): Response<DeviceRegistrationResponse>
+    @POST(Constants.ENDPOINT_REGISTER_DEVICE)
+    suspend fun registerDevice(@Body request: DeviceRegistrationRequest): Response<GenericApiResponse<DeviceRegistrationResponse>>
 
     // Example: Get device status (might not be needed if registration returns all info)
     // @GET(Constants.ENDPOINT_DEVICE_STATUS)
@@ -40,7 +41,7 @@ interface ApiService {
     // For now, explicit deviceId is fine for MVP, assuming token handles auth.
 
     @POST(Constants.ENDPOINT_HEARTBEAT)
-    suspend fun sendHeartbeat(@Body request: HeartbeatRequest): Response<SimpleSuccessResponse>
+    suspend fun sendHeartbeat(@Body request: HeartbeatRequestV2): Response<SimpleSuccessResponse>
 
     // AUTHENTICATE
     @POST("/api/device/authenticate")
@@ -50,8 +51,8 @@ interface ApiService {
     @POST("/api/device/heartbeat/{device}")
     suspend fun sendDeviceHeartbeat(
         @Path("device") deviceId: String,
-        @Body request: HeartbeatRequest // Assuming HeartbeatRequest is the correct DTO now
-    ): Response<HeartbeatResponse> // Assuming HeartbeatResponse is the correct DTO now
+        @Body request: HeartbeatRequestV2
+    ): Response<HeartbeatResponseV2>
 
     // CONTENT CRUD
     @GET(Constants.ENDPOINT_CONTENT)
@@ -117,4 +118,4 @@ interface ApiService {
     suspend fun downloadContent(
         @Url url: String
     ): ResponseBody
-}
+} 
