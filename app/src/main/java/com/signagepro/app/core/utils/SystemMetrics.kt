@@ -8,6 +8,10 @@ import android.os.BatteryManager
 import android.os.StatFs
 import android.provider.Settings
 import android.view.WindowManager
+import com.signagepro.app.core.utils.dto.ScreenStatus
+import com.signagepro.app.core.utils.dto.StorageInfo
+import com.signagepro.app.core.utils.dto.NetworkInfo
+import com.signagepro.app.core.logging.Logger // Assuming Logger is in this package
 import java.io.File
 import java.io.RandomAccessFile
 import kotlin.math.roundToInt
@@ -56,7 +60,7 @@ class SystemMetrics(private val context: Context) {
         return (usedMemory / totalMemory * 100).roundToInt() / 100.0
     }
 
-    fun getScreenStatus(): ScreenStatus {
+    fun getScreenStatus(): com.signagepro.app.core.utils.dto.ScreenStatus {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val brightness = Settings.System.getInt(
             context.contentResolver,
@@ -68,23 +72,23 @@ class SystemMetrics(private val context: Context) {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
         val isScreenOn = powerManager.isInteractive
 
-        return ScreenStatus(
+        return com.signagepro.app.core.utils.dto.ScreenStatus(
             power = if (isScreenOn) "on" else "off",
             brightness = (brightness * 100 / 255).coerceIn(0, 100)
         )
     }
 
-    fun getStorageInfo(): StorageInfo {
+    fun getStorageInfo(): com.signagepro.app.core.utils.dto.StorageInfo {
         val stat = StatFs(File(context.filesDir.parent).path)
         val total = stat.totalBytes
         val free = stat.availableBytes
-        return StorageInfo(
+        return com.signagepro.app.core.utils.dto.StorageInfo(
             total = total,
             free = free
         )
     }
 
-    fun getNetworkInfo(): NetworkInfo {
+    fun getNetworkInfo(): com.signagepro.app.core.utils.dto.NetworkInfo {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
@@ -110,7 +114,7 @@ class SystemMetrics(private val context: Context) {
             else -> 0
         }
 
-        return NetworkInfo(
+        return com.signagepro.app.core.utils.dto.NetworkInfo(
             type = type,
             signal_strength = signalStrength
         )
@@ -136,4 +140,4 @@ class SystemMetrics(private val context: Context) {
 data class BatteryInfo(
     val level: Int,
     val is_charging: Boolean
-) 
+)

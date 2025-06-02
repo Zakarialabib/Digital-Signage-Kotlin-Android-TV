@@ -35,9 +35,17 @@ fun SplashScreen(
         )
     )
 
+    var startLoadingAnimation by remember { mutableStateOf(false) }
+    val alphaLoadingAnim = animateFloatAsState(
+        targetValue = if (startLoadingAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 500) // Shorter fade-in for loading elements
+    )
+
     LaunchedEffect(key1 = true) {
-        startAnimation = true
-        delay(2000)
+        startAnimation = true       // Start main logo/title animation
+        delay(500)                  // Wait for a bit
+        startLoadingAnimation = true // Start loading indicator/text animation
+        delay(1500)                 // Remaining time for splash (2000ms total)
         onSplashFinished()
     }
 
@@ -88,7 +96,7 @@ fun SplashScreen(
             CircularProgressIndicator(
                 modifier = Modifier
                     .size(48.dp)
-                    .alpha(alphaAnim.value),
+                    .alpha(alphaLoadingAnim.value), // Use new alpha for loading
                 color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 4.dp
             )
@@ -100,8 +108,8 @@ fun SplashScreen(
                 text = "Initializing...",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.alpha(alphaAnim.value)
+                modifier = Modifier.alpha(alphaLoadingAnim.value) // Use new alpha for loading
             )
         }
     }
-} 
+}

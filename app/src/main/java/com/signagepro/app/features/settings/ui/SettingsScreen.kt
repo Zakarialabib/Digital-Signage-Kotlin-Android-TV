@@ -13,7 +13,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.signagepro.app.R
 import com.signagepro.app.ui.components.*
+import androidx.compose.ui.layout.ContentScale
 import com.signagepro.app.features.settings.viewmodel.SettingsViewModel
+import com.signagepro.app.features.settings.viewmodel.SettingsUiState
 
 @Composable
 fun SettingsScreen(
@@ -38,7 +40,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .size(80.dp)
                 .padding(bottom = 16.dp),
-            contentScale = ContentScale.Fit
+            contentScale = ContentScale.Fit // This was already correct
         )
 
         Text(
@@ -336,4 +338,4 @@ data class WifiSettings(
 data class ProxySettings(
     val host: String = "",
     val port: Int = 0
-) 
+)

@@ -7,9 +7,8 @@ import androidx.work.WorkerParameters
 import com.signagepro.app.core.data.local.dao.ContentDao
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.logging.DiagnosticLogger
-import com.signagepro.app.core.logging.LogLevel // Added import
+import com.signagepro.app.core.logging.LogLevel
 import com.signagepro.app.core.network.ApiService
-import com.signagepro.app.core.data.repository.DeviceRepository // Added import
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +20,9 @@ class MediaDownloadWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val apiService: ApiService,
-    private val deviceSettingsDao: DeviceSettingsDao, // Keep for now
+    private val deviceSettingsDao: DeviceSettingsDao,
     private val contentDao: ContentDao,
-    private val diagnosticLogger: DiagnosticLogger,
-    private val deviceRepository: DeviceRepository // Added
+    private val diagnosticLogger: DiagnosticLogger
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -38,15 +36,14 @@ class MediaDownloadWorker @AssistedInject constructor(
                 "Starting download for content: $contentId"
             )
 
-            val deviceId = deviceRepository.getDeviceId()
-            if (deviceId.isBlank()) { // Check if the retrieved deviceId is blank
+            val deviceSettings = deviceSettingsDao.getDeviceSettings()
+            if (deviceSettings == null || deviceSettings.deviceId == null) {
                 diagnosticLogger.logError(
                     "MediaDownloadWorker",
-                    "Device ID is blank or not available. Cannot download media."
+                    "Device not registered"
                 )
                 return@withContext Result.failure()
             }
-            // deviceId is now available if any subsequent calls need it.
 
             val content = contentDao.getContentById(contentId)
             if (content == null) {
@@ -91,4 +88,4 @@ class MediaDownloadWorker @AssistedInject constructor(
     companion object {
         const val KEY_CONTENT_ID = "content_id"
     }
-} 
+}

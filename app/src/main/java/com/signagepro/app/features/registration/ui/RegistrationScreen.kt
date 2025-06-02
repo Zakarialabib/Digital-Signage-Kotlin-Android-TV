@@ -14,9 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.signagepro.app.R
 import com.signagepro.app.ui.components.*
 import com.signagepro.app.features.registration.viewmodel.RegistrationViewModel
-import com.signagepro.app.features.registration.viewmodel.RegistrationUiState // Assuming this state name
-// If collectAsState is not automatically resolved by runtime.*
-import androidx.compose.runtime.collectAsState
+import com.signagepro.app.features.registration.viewmodel.RegistrationState // Added import
+import androidx.compose.ui.layout.ContentScale // Added import
 
 @Composable
 fun RegistrationScreen(
@@ -25,20 +24,32 @@ fun RegistrationScreen(
     modifier: Modifier = Modifier
 ) {
     var tenantId by remember { mutableStateOf("") }
-    var hardwareId by remember { mutableStateOf("") }
+    var deviceName by remember { mutableStateOf("") } // Changed from hardwareId to deviceName
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val uiStateValue by viewModel.uiState.collectAsState()
+    val uiState by viewModel.registrationState.collectAsState() // Corrected to use registrationState from ViewModel
 
-    LaunchedEffect(uiStateValue) {
-        when (val state = uiStateValue) {
-            is RegistrationUiState.Success -> onRegistrationSuccess()
-            is RegistrationUiState.Error -> {
+    LaunchedEffect(uiState) { // Observe the collected state
+        when (val state = uiState) {
+            is RegistrationState.Success -> onRegistrationSuccess()
+            is RegistrationState.Error -> {
                 isError = true
                 errorMessage = state.message
             }
-            else -> {} // Handle Loading or Idle if necessary, or just ignore
+            is RegistrationState.Idle -> {
+                isError = false
+                errorMessage = null
+            }
+            is RegistrationState.Loading -> {
+                isError = false // Clear previous errors when loading
+                errorMessage = null
+            }
+            is RegistrationState.Registered -> {
+                // This case might also trigger onRegistrationSuccess or navigate elsewhere
+                // For now, let's assume onRegistrationSuccess handles it.
+                onRegistrationSuccess()
+            }
         }
     }
 
@@ -76,55 +87,56 @@ fun RegistrationScreen(
 
         SignageProCard(
             title = "Device Registration",
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "Enter your device registration details below. You can find these in your SignagePro dashboard.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                SignageProTextField(
-                    value = tenantId,
-                    onValueChange = { tenantId = it },
-                    label = "Tenant ID",
-                    isError = isError && tenantId.isBlank(),
-                    errorMessage = if (isError && tenantId.isBlank()) "Tenant ID is required" else null
-                )
-
-                SignageProTextField(
-                    value = hardwareId,
-                    onValueChange = { hardwareId = it },
-                    label = "Hardware ID",
-                    isError = isError && hardwareId.isBlank(),
-                    errorMessage = if (isError && hardwareId.isBlank()) "Hardware ID is required" else null
-                )
-
-                if (isError && errorMessage != null) {
+            modifier = Modifier.padding(bottom = 16.dp),
+            content = { // Ensure content lambda is correctly passed
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
-                        text = errorMessage!!,
-                        color = MaterialTheme.colorScheme.error,
+                        text = "Enter your device registration details below. You can find these in your SignagePro dashboard.",
                         style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    SignageProTextField(
+                        value = tenantId,
+                        onValueChange = { tenantId = it },
+                        label = "Tenant ID",
+                        isError = isError && tenantId.isBlank(),
+                        errorMessage = if (isError && tenantId.isBlank()) "Tenant ID is required" else null
+                    )
+
+                    SignageProTextField(
+                        value = deviceName,
+                        onValueChange = { deviceName = it },
+                        label = "Device Name", // Changed label
+                        isError = isError && deviceName.isBlank(),
+                        errorMessage = if (isError && deviceName.isBlank()) "Device Name is required" else null
+                    )
+
+                    if (isError && errorMessage != null) {
+                        Text(
+                            text = errorMessage!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    SignageProButton(
+                        text = "Register Device",
+                        onClick = {
+                            isError = false
+                            errorMessage = null
+                            viewModel.registerDevice(tenantId, deviceName) // Pass deviceName
+                        },
+                        isLoading = uiState is RegistrationState.Loading // Use collected state
                     )
                 }
-
-                SignageProButton(
-                    text = "Register Device",
-                    onClick = {
-                        isError = false
-                        errorMessage = null
-                        viewModel.registerDevice(tenantId, hardwareId)
-                    },
-                    isLoading = uiStateValue is RegistrationUiState.Loading
-                )
             }
-        }
+        )
 
         Column(
             modifier = Modifier.padding(top = 16.dp),

@@ -3,17 +3,20 @@ package com.signagepro.app.core.data.repository
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import android.util.DisplayMetrics
+import android.view.WindowManager
 import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
 import com.signagepro.app.core.data.model.DeviceInfo
-import com.signagepro.app.core.data.model.HeartbeatRequest
-import com.signagepro.app.core.data.model.HeartbeatResponse
+import com.signagepro.app.core.network.dto.HeartbeatRequest
+import com.signagepro.app.core.network.dto.HeartbeatResponse
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
+import com.signagepro.app.core.data.repository.AppPreferencesRepository
 import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,18 +35,29 @@ class DeviceRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val deviceSettingsDao: DeviceSettingsDao,
     private val sharedPreferencesManager: SharedPreferencesManager,
-    private val dispatchers: CoroutineDispatchers
+    private val dispatchers: CoroutineDispatchers,
+    private val appPreferencesRepository: AppPreferencesRepository // Added for registration token
 ) : DeviceRepository {
 
-    override suspend fun registerDevice(request: DeviceRegistrationRequest): Flow<Result<DeviceRegistrationResponse>> {
+    override suspend fun registerDevice(request: DeviceRegistrationRequest): Flow<com.signagepro.app.core.utils.Result<DeviceRegistrationResponse>> {
         // DeviceRegistrationResponse is imported from com.signagepro.app.core.network.dto
         // TODO: Implement actual logic to call backend API
         // For now, returning a dummy success response using the DTO structure
+        val playerInfo = com.signagepro.app.core.network.dto.PlayerInfo(
+            playerId = "1",
+            layoutId = "1"
+        )
+        
+        val registrationData = com.signagepro.app.core.network.dto.RegistrationData(
+            deviceId = request.deviceId,
+            registrationToken = "dummy-device-token-12345",
+            playerInfo = playerInfo
+        )
+        
         val dummyDtoResponse = DeviceRegistrationResponse(
+            success = true,
             message = "Device registered successfully (mock DTO)",
-            deviceToken = "dummy-dto-api-key-12345",
-            playerId = 101L,
-            layoutId = 202L 
+            data = registrationData
         )
         return kotlinx.coroutines.flow.flowOf(Result.Success(dummyDtoResponse))
     }
@@ -65,18 +79,29 @@ class DeviceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun sendHeartbeat(request: HeartbeatRequest): Flow<Result<HeartbeatResponse>> {
-        // TODO: Implement actual logic to call backend API
-        // This request is com.signagepro.app.core.data.model.HeartbeatRequest
-        // The ApiService expects com.signagepro.app.core.network.dto.HeartbeatRequest
-        // Needs mapping or DTO directly. For now, dummy.
-        val dummyResponse = HeartbeatResponse( // This is model.HeartbeatResponse
-            success = true,
-            nextHeartbeatIntervalSeconds = 60,
-            commands = null
-        )
-        // This return type in interface uses model.HeartbeatResponse, which is fine for the repo layer.
-        // The actual API call to apiService.sendHeartbeat will need a DTO.
-        return kotlinx.coroutines.flow.flowOf(Result.Success(dummyResponse))
+        return flow {
+            try {
+                // Make the actual API call using the provided request
+                val response = apiService.sendDeviceHeartbeat(
+                    deviceId = sharedPreferencesManager.getDeviceId() ?: "",
+                    request = request
+                )
+                
+                if (response.isSuccessful && response.body() != null) {
+                    // Convert API response to HeartbeatResponse
+                    val heartbeatResponse = HeartbeatResponse(
+                        success = true,
+                        message = response.body()?.message,
+                        needs_sync = response.body()?.needs_sync ?: false
+                    )
+                    emit(Result.Success(heartbeatResponse))
+                } else {
+                    emit(Result.Error(Exception("Failed to send heartbeat: ${response.message()}")))
+                }
+            } catch (e: Exception) {
+                emit(Result.Error(e))
+            }
+        }
     }
 
     override fun getDeviceApiKey(): Flow<String?> {
@@ -99,6 +124,27 @@ class DeviceRepositoryImpl @Inject constructor(
             sharedPreferencesManager.saveDeviceId(deviceId)
         }
         return deviceId
+    }
+    
+    /**
+     * Gets the screen resolution of the device in the format "widthxheight".
+     */
+    private fun getScreenResolution(context: Context): String {
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val displayMetrics = DisplayMetrics()
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val display = windowManager.currentWindowMetrics
+            val width = display.bounds.width()
+            val height = display.bounds.height()
+            return "${width}x${height}"
+        } else {
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getMetrics(displayMetrics)
+            val width = displayMetrics.widthPixels
+            val height = displayMetrics.heightPixels
+            return "${width}x${height}"
+        }
     }
 
     override suspend fun saveDeviceId(deviceId: String) {
@@ -173,43 +219,73 @@ class DeviceRepositoryImpl @Inject constructor(
             }
 
             val appVersion = BuildConfig.VERSION_NAME
-            val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}" 
+            val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
 
-            val requestDto = com.signagepro.app.core.network.dto.DeviceRegistrationRequest( // Explicitly use DTO for request
+            // Create device info object
+            val deviceInfo = DeviceInfo(
                 deviceId = currentDeviceId,
                 deviceName = deviceName,
-                appVersion = appVersion
-                // registrationCode is not in this DTO version, check API contract if it's needed via different DTO/field
+                model = Build.MODEL,
+                manufacturer = Build.MANUFACTURER,
+                osVersion = Build.VERSION.RELEASE,
+                sdkVersion = Build.VERSION.SDK_INT.toString(),
+                appVersion = appVersion,
+                screenResolution = getScreenResolution(context)
             )
 
-            val retrofitResponse = apiService.registerDevice(requestDto) // This uses the DTO request
+            // Create the registration request
+            val requestDto = DeviceRegistrationRequest(
+                deviceId = currentDeviceId,
+                deviceName = deviceName,
+                hardwareId = currentDeviceId,
+                deviceType = "android_player",
+                appVersion = appVersion,
+                tenantId = sharedPreferencesManager.getTenantId(),
+                deviceInfo = deviceInfo
+            )
+
+            val retrofitResponse = apiService.registerDevice(requestDto)
 
             if (retrofitResponse.isSuccessful && retrofitResponse.body() != null) {
-                val apiResponseBody = retrofitResponse.body()!! // GenericApiResponse<dto.DeviceRegistrationResponse>
-                if (apiResponseBody.status == "success" && apiResponseBody.data != null) {
-                    val data = apiResponseBody.data!! // This is dto.DeviceRegistrationResponse
-                    sharedPreferencesManager.saveAuthToken(data.deviceToken)
-                    // Update DeviceSettingsEntity
-                    val updatedSettings = (deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
-                        deviceId = currentDeviceId,
-                        playerId = null,
-                        currentLayoutId = null,
-                        registrationToken = null,
-                        lastHeartbeatTimestamp = null,
-                        lastSuccessfulSyncTimestamp = null
-                    ))
-                        .copy(
-                            registrationToken = data.deviceToken,
-                            isRegistered = true,
-                            playerId = data.playerId,
-                            currentLayoutId = data.layoutId ?: deviceSettingsDao.getDeviceSettingsSnapshot()?.currentLayoutId // Preserve if null
-                        )
-                    deviceSettingsDao.saveDeviceSettings(updatedSettings)
+                val registrationResponse: DeviceRegistrationResponse = retrofitResponse.body()!!
+                
+                if (registrationResponse.success && registrationResponse.data != null) {
+                    val registrationData = registrationResponse.data!!
+                    appPreferencesRepository.saveRegistrationToken(registrationData.registrationToken)
+                    sharedPreferencesManager.saveAuthToken(registrationData.registrationToken) // Keep for legacy parts
+
+                    val currentSettings = deviceSettingsDao.getDeviceSettingsSnapshot()
                     
+                    val newPlayerId = registrationData.playerInfo?.playerId?.toLongOrNull()
+                    val newLayoutId = registrationData.playerInfo?.layoutId?.toLongOrNull() // Convert String? to Long?
+
+                    val settingsToSave = if (currentSettings == null) {
+                        DeviceSettingsEntity(
+                            id = 1, // Explicitly set the ID
+                            deviceId = registrationData.deviceId,
+                            playerId = newPlayerId,
+                            currentLayoutId = newLayoutId,
+                            registrationToken = registrationData.registrationToken,
+                            lastHeartbeatTimestamp = null,
+                            lastSuccessfulSyncTimestamp = null,
+                            isRegistered = true
+                        )
+                    } else {
+                        currentSettings.copy(
+                            deviceId = registrationData.deviceId,
+                            registrationToken = registrationData.registrationToken,
+                            isRegistered = true,
+                            playerId = newPlayerId ?: currentSettings.playerId, // Use new if available, else keep old
+                            currentLayoutId = newLayoutId ?: currentSettings.currentLayoutId // Use new if available, else keep old
+                            // lastSuccessfulSyncTimestamp is preserved by default in copy if not specified
+                        )
+                     }
+                     deviceSettingsDao.saveDeviceSettings(settingsToSave)
+
                     sharedPreferencesManager.setDeviceRegistered(true)
                     emit(Result.Success(true))
                 } else {
-                    emit(Result.Error(Exception(apiResponseBody.message ?: "Registration API logic error")))
+                    emit(Result.Error(Exception(registrationResponse.message ?: "Registration failed: No token or error message")))
                 }
             } else {
                 emit(Result.Error(Exception(retrofitResponse.errorBody()?.string() ?: "Registration failed HTTP ${retrofitResponse.code()}")))
