@@ -97,7 +97,24 @@ data class DeviceRegistrationRequest(
     @SerializedName("device_id") val deviceId: String, // Unique hardware ID
     @SerializedName("device_name") val deviceName: String, // e.g., "Living Room TV"
     @SerializedName("device_type") val deviceType: String = "android_tv",
-    @SerializedName("app_version") val appVersion: String
+    @SerializedName("app_version") val appVersion: String,
+    @SerializedName("tenant_id") val tenantId: String?, // Added tenantId
+    @SerializedName("hardware_id") val hardwareId: String?, // Added hardwareId
+    @SerializedName("device_info") val deviceInfo: DeviceInfo? // Added deviceInfo
+)
+
+// --- Device Info --- //
+data class DeviceInfo(
+    @SerializedName("device_id") val deviceId: String,
+    @SerializedName("device_name") val deviceName: String,
+    @SerializedName("model") val model: String,
+    @SerializedName("manufacturer") val manufacturer: String,
+    @SerializedName("os_version") val osVersion: String,
+    @SerializedName("sdk_version") val sdkVersion: String, // Corrected from sdkVersion to sdk_version to match potential backend expectations or ensure consistency
+    @SerializedName("app_version") val appVersion: String,
+    @SerializedName("screen_resolution") val screenResolution: String,
+    @SerializedName("ip_address") val ipAddress: String?, // Added ipAddress
+    @SerializedName("mac_address") val macAddress: String? // Added macAddress
 )
 
 data class DeviceRegistrationResponse(
@@ -113,22 +130,6 @@ data class UpdateInfoDto(
     @SerializedName("download_url") val downloadUrl: String,
     @SerializedName("release_notes") val releaseNotes: String?,
     @SerializedName("size_bytes") val sizeBytes: Long?
-)
-
-// DTOs from core.data.model using kotlinx.serialization
-@Serializable
-data class DeviceRegistrationRequestKtx(
-    val deviceId: String, // Unique identifier for the TV device (e.g., Android ID)
-    val registrationCode: String, // Code displayed on TV, entered by user in backend
-    val deviceName: String? = null // Optional user-friendly name for the device
-)
-
-@Serializable
-data class DeviceRegistrationResponseKtx(
-    val success: Boolean,
-    val deviceApiKey: String? = null, // API key for this device to communicate with backend
-    val message: String? = null,
-    val assignedPlaylistId: String? = null // Initial playlist assigned to this device
 )
 
 // --- Generic Responses --- //
@@ -164,40 +165,6 @@ data class LayoutDto(
     @SerializedName("name") val name: String,
     @SerializedName("items") val items: List<MediaItemDto>
 )
-
-// --- Heartbeat and Commands (from ApplicationStatus.kt) --- //
-@Serializable
-data class HeartbeatRequestKtx(
-    val deviceId: String,
-    val timestamp: Long,
-    // Changed from ApplicationStatus to Map<String, String> for simplicity in DTO
-    // The full ApplicationStatus can be constructed or used on the domain layer if needed.
-    val currentStatus: Map<String, String> 
-)
-
-@Serializable
-data class HeartbeatResponseKtx(
-    val success: Boolean,
-    val nextHeartbeatIntervalSeconds: Int? = null,
-    val commands: List<DeviceCommandKtx>? = null
-)
-
-@Serializable
-sealed class DeviceCommandKtx {
-    abstract val commandId: String
-
-    @Serializable
-    data class RestartAppKtx(override val commandId: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class UpdateContentKtx(override val commandId: String, val playlistId: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class UpdateAppSettingsKtx(override val commandId: String, val settingsJson: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class TakeScreenshotKtx(override val commandId: String, val uploadUrl: String) : DeviceCommandKtx()
-}
 
 fun MediaItemDto.toEntity(): MediaItemEntity {
     return MediaItemEntity(

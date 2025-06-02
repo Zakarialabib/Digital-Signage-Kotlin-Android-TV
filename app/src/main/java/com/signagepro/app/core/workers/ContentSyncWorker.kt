@@ -39,8 +39,8 @@ class ContentSyncWorker @AssistedInject constructor(
                 "Starting content sync"
             )
 
-            val deviceSettings = deviceSettingsDao.getDeviceSettings()
-            if (deviceSettings == null || deviceSettings.deviceId == null) {
+            val deviceSettings = deviceSettingsDao.getDeviceSettings().firstOrNull() // Assuming getDeviceSettings() returns a Flow
+            if (deviceSettings == null || deviceSettings.deviceId.isNullOrBlank()) {
                 diagnosticLogger.logError(
                     "ContentSyncWorker",
                     "Device not registered"

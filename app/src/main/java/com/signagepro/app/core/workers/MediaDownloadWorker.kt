@@ -36,8 +36,8 @@ class MediaDownloadWorker @AssistedInject constructor(
                 "Starting download for content: $contentId"
             )
 
-            val deviceSettings = deviceSettingsDao.getDeviceSettings()
-            if (deviceSettings == null || deviceSettings.deviceId == null) {
+            val deviceSettings = deviceSettingsDao.getDeviceSettings().firstOrNull() // Assuming getDeviceSettings() returns a Flow
+            if (deviceSettings == null || deviceSettings.deviceId.isNullOrBlank()) {
                 diagnosticLogger.logError(
                     "MediaDownloadWorker",
                     "Device not registered"

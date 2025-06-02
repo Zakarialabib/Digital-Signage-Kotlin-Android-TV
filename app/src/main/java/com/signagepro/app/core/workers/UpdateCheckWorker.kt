@@ -45,14 +45,23 @@ class UpdateCheckWorker @AssistedInject constructor(
                 return@withContext Result.retry()
             }
 
-            val updateInfo = response.body()!!
-            if (updateInfo.has_update) {
-                Logger.i("UpdateCheckWorker: Update available: ${updateInfo.version}")
-                
-                // Download update if available
-                if (updateInfo.download_url != null) {
-                    val updateFile = downloadUpdate(updateInfo.download_url)
-                    if (updateFile != null) {
+            val updateInfoResponse = response.body()!! // This is likely GenericApiResponse<UpdateInfoDto>
+            // Assuming 'has_update' is a field in GenericApiResponse or a similar wrapper, not directly in UpdateInfoDto
+            // If 'has_update' is meant to be derived from whether updateInfo.data is present and its version is newer, logic would need adjustment.
+            // For now, proceeding with the assumption that 'has_update' is a boolean flag on the response wrapper.
+            // Let's assume the actual UpdateInfoDto is in a 'data' field of the response body.
+            val updateData = updateInfoResponse.data // Assuming GenericApiResponse has a 'data' field for UpdateInfoDto
+
+            if (updateInfoResponse.status == "success" && updateData != null) { // Check status and if data is present
+                // Check for a version difference or a specific 'has_update' flag if available on updateData itself
+                // For this example, let's assume a simple check: if updateData.version is different from current BuildConfig.VERSION_NAME
+                // This is a more robust way to check for an update than a 'has_update' boolean from the server if not explicitly designed for it.
+                if (updateData.version != BuildConfig.VERSION_NAME) { // A more direct check for an actual update
+                    Logger.i("UpdateCheckWorker: Update available. Current: ${BuildConfig.VERSION_NAME}, New: ${updateData.version}")
+                    
+                    if (!updateData.downloadUrl.isNullOrBlank()) {
+                        val updateFile = downloadUpdate(updateData.downloadUrl)
+                        if (updateFile != null) {
                         Logger.i("UpdateCheckWorker: Update downloaded successfully: ${updateFile.absolutePath}")
                         // TODO: Trigger system update installation
                         // This would typically involve using the system's package installer

@@ -25,6 +25,10 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import android.net.wifi.WifiManager
+import android.text.format.Formatter
+import java.net.NetworkInterface
+import java.util.Collections
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -230,14 +234,16 @@ class DeviceRepositoryImpl @Inject constructor(
                 osVersion = Build.VERSION.RELEASE,
                 sdkVersion = Build.VERSION.SDK_INT.toString(),
                 appVersion = appVersion,
-                screenResolution = getScreenResolution(context)
+                screenResolution = getScreenResolution(context),
+                ipAddress = getIpAddress(), // Assuming getIpAddress() is available or will be added
+                macAddress = getMacAddress() // Assuming getMacAddress() is available or will be added
             )
 
             // Create the registration request
             val requestDto = DeviceRegistrationRequest(
                 deviceId = currentDeviceId,
                 deviceName = deviceName,
-                hardwareId = currentDeviceId,
+                hardwareId = currentDeviceId, // Ensure this is the correct ID to use for hardwareId
                 deviceType = "android_player",
                 appVersion = appVersion,
                 tenantId = sharedPreferencesManager.getTenantId(),
@@ -340,5 +346,39 @@ class DeviceRepositoryImpl @Inject constructor(
        val settings = deviceSettingsDao.getDeviceSettingsSnapshot()
        // Check both room flag and token presence in shared prefs
        settings?.isRegistered == true && !sharedPreferencesManager.getAuthToken().isNullOrBlank()
+    }
+
+    private fun getIpAddress(): String? {
+        try {
+            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            val wifiInfo = wifiManager.connectionInfo
+            val ipAddress = wifiInfo.ipAddress
+            return Formatter.formatIpAddress(ipAddress)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    private fun getMacAddress(): String? {
+        try {
+            val all: List<NetworkInterface> = Collections.list(NetworkInterface.getNetworkInterfaces())
+            for (nif in all) {
+                if (!nif.name.equals("wlan0", ignoreCase = true)) continue
+
+                val macBytes = nif.hardwareAddress ?: return null
+                val res1 = StringBuilder()
+                for (b in macBytes) {
+                    res1.append(String.format("%02X:", b))
+                }
+                if (res1.length > 0) {
+                    res1.deleteCharAt(res1.length - 1)
+                }
+                return res1.toString()
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+        return null
     }
 }

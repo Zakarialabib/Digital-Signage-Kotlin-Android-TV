@@ -5,6 +5,7 @@ import android.os.Build
 import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.model.DeviceRegistration
+import com.signagepro.app.core.network.dto.DeviceInfo // Added import for DeviceInfo
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.AuthRequest
 import com.signagepro.app.core.network.dto.AuthResponse
@@ -26,7 +27,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory // Corrected import
+import kotlinx.serialization.json.Json // Added import for Json
 import okhttp3.MediaType.Companion.toMediaType
 import javax.inject.Inject
 import javax.inject.Singleton
