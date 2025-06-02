@@ -214,16 +214,19 @@ class DeviceRepositoryImpl @Inject constructor(
                         currentLayoutId = null,
                         registrationToken = null,
                         lastHeartbeatTimestamp = null,
+                        lastSuccessfulSyncTimestamp = null, // Added default
                         isRegistered = false,
-                        layoutId = 1L
+                        currentLayoutId = 1L, // Assuming this was the intended layoutId field, maps to currentLayoutId
+                        lastSuccessfulSyncTimestamp = null // Ensure this is present
                     )
 
                     val updatedSettings = currentSettings.copy(
                         deviceId = registrationData.deviceId,
                         registrationToken = registrationData.registrationToken,
                         isRegistered = true,
-                        playerId = null,
-                        layoutId = null
+                        playerId = null, // Explicitly setting playerId
+                        currentLayoutId = registrationData.layoutId, // Using layoutId from registrationData for currentLayoutId
+                        lastSuccessfulSyncTimestamp = currentSettings.lastSuccessfulSyncTimestamp // Preserve existing or set to null if not available
                     )
                     deviceSettingsDao.saveDeviceSettings(updatedSettings)
 

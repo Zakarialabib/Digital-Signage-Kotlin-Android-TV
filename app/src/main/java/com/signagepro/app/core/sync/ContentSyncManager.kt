@@ -63,8 +63,8 @@ class ContentSyncManager @Inject constructor(
         _syncResult.value = null
 
         currentSyncJob = syncScope.launch {
+            val startTime = System.currentTimeMillis()
             try {
-                val startTime = System.currentTimeMillis()
                 val deviceId = secureStorage.getDeviceId()
                     ?: throw IllegalStateException("Device not registered")
 
@@ -114,7 +114,7 @@ class ContentSyncManager @Inject constructor(
                     _currentItem.value = content.name
                     val contentFile = File(contentDir, content.id)
                     val needsDownload = !contentFile.exists() || 
-                        contentFile.lastModified() < content.lastModified
+                        (content.lastModified?.let { contentFile.lastModified() < it } ?: true) // Handle nullable lastModified, download if null
 
                     if (needsDownload) {
                         try {

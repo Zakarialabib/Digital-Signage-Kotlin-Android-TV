@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
+import com.signagepro.app.core.model.SystemMetrics
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -52,10 +53,13 @@ class DiagnosticLogger @Inject constructor(
 
         // Also log to Android logcat
         when (level) {
+            LogLevel.VERBOSE -> Log.v(tag, message, throwable)
             LogLevel.DEBUG -> Log.d(tag, message, throwable)
             LogLevel.INFO -> Log.i(tag, message, throwable)
             LogLevel.WARNING -> Log.w(tag, message, throwable)
             LogLevel.ERROR -> Log.e(tag, message, throwable)
+            LogLevel.ASSERT -> Log.wtf(tag, message, throwable)
+            else -> Log.v(tag, "[${level.name}] $message", throwable) // Handle any other levels, defaulting to verbose
         }
     }
 

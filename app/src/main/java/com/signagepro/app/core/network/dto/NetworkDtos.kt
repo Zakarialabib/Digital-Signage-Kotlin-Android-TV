@@ -68,6 +68,13 @@ data class DeviceRegistrationRequestKtx(
     val deviceName: String? = null // Optional user-friendly name for the device
 )
 
+// --- Update Check --- //
+data class UpdateCheckResponse(
+    @SerializedName("has_update") val has_update: Boolean,
+    @SerializedName("version") val version: String,
+    @SerializedName("download_url") val download_url: String?
+)
+
 @Serializable
 data class DeviceRegistrationResponseKtx(
     val success: Boolean,
