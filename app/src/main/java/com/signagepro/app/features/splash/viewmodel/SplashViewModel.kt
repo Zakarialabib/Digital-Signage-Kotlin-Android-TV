@@ -34,9 +34,9 @@ class SplashViewModel @Inject constructor(
             try {
                 // Check for registration token or device ID to determine if registered
                 val registrationToken = appPreferencesRepository.getRegistrationToken()
-                val deviceId = deviceSettingsRepository.getDeviceId().firstOrNull() // Assuming getDeviceId() returns a Flow
+                val deviceId = deviceSettingsRepository.getDeviceId() // getDeviceId() returns a String
 
-                val isRegistered = !registrationToken.isNullOrBlank() && !deviceId.isNullOrBlank()
+                val isRegistered = !registrationToken.isNullOrBlank() && deviceId.isNotBlank()
                 
                 val onboardingCompleted = appPreferencesRepository.isOnboardingCompleted().firstOrNull() ?: false
 

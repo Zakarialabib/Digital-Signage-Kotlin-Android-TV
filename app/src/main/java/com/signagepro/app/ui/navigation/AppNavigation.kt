@@ -80,8 +80,8 @@ fun AppNavigation(
                         }
                     }
                     SplashDestination.Display -> {
-                        val deviceSettings = splashViewModel.deviceSettingsRepository.getDeviceSettings().firstOrNull() // Changed to deviceSettingsRepository
-                        val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
+                        val deviceSettings = splashViewModel.deviceSettingsRepository.getDeviceSettings() // Returns DeviceSettingsEntity directly
+                        val currentLayoutId = deviceSettings.currentLayoutId?.toString() ?: "default_layout"
                         
                         navController.navigate(createDisplayRoute(currentLayoutId)) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
@@ -103,8 +103,8 @@ fun AppNavigation(
                 onRegistrationSuccess = { 
                     coroutineScope.launch {
                         // After successful registration, fetch the latest settings to get the layout
-                        val deviceSettings = registrationViewModel.deviceSettingsRepository.getDeviceSettings().firstOrNull()
-                        val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
+                        val deviceSettings = registrationViewModel.deviceSettingsRepository.getDeviceSettings()
+                        val currentLayoutId = deviceSettings.currentLayoutId?.toString() ?: "default_layout"
                         navController.navigate(createDisplayRoute(currentLayoutId)) {
                             popUpTo(Screen.Registration.route) { inclusive = true }
                         }
@@ -120,8 +120,8 @@ fun AppNavigation(
             OnboardingScreen(
                 onComplete = {
                     coroutineScope.launch {
-                        val deviceSettings = splashViewModel.deviceSettingsRepository.getDeviceSettings().firstOrNull() // Changed to deviceSettingsRepository
-                        val currentLayoutId = deviceSettings?.currentLayoutId?.toString() ?: "default_layout"
+                        val deviceSettings = splashViewModel.deviceSettingsRepository.getDeviceSettings() // Returns DeviceSettingsEntity directly
+                        val currentLayoutId = deviceSettings.currentLayoutId?.toString() ?: "default_layout"
                         navController.navigate(createDisplayRoute(currentLayoutId)) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }

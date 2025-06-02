@@ -67,18 +67,29 @@ class DeviceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun sendHeartbeat(request: HeartbeatRequest): Flow<Result<HeartbeatResponse>> {
-        // TODO: Implement actual logic to call backend API
-        // This request is com.signagepro.app.core.network.dto.HeartbeatRequest
-        // The ApiService expects com.signagepro.app.core.network.dto.HeartbeatRequest
-        // Needs mapping or DTO directly. For now, dummy.
-        val dummyResponse = HeartbeatResponse( // This is model.HeartbeatResponse
-            success = true,
-            nextHeartbeatIntervalSeconds = 60,
-            commands = null
-        )
-        // This return type in interface uses model.HeartbeatResponse, which is fine for the repo layer.
-        // The actual API call to apiService.sendHeartbeat will need a DTO.
-        return kotlinx.coroutines.flow.flowOf(Result.Success(dummyResponse))
+        return flow {
+            try {
+                // Make the actual API call using the provided request
+                val response = apiService.sendDeviceHeartbeat(
+                    deviceId = sharedPreferencesManager.getDeviceId() ?: "",
+                    request = request
+                )
+                
+                if (response.isSuccessful && response.body() != null) {
+                    // Convert API response to HeartbeatResponse
+                    val heartbeatResponse = HeartbeatResponse(
+                        success = true,
+                        message = response.body()?.message,
+                        needs_sync = response.body()?.needs_sync ?: false
+                    )
+                    emit(Result.Success(heartbeatResponse))
+                } else {
+                    emit(Result.Error(Exception("Failed to send heartbeat: ${response.message()}")))
+                }
+            } catch (e: Exception) {
+                emit(Result.Error(e))
+            }
+        }
     }
 
     override fun getDeviceApiKey(): Flow<String?> {

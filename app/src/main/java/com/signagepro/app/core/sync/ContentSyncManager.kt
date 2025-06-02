@@ -3,7 +3,6 @@ package com.signagepro.app.core.sync
 import android.content.Context
 import com.signagepro.app.core.logging.DiagnosticLogger
 import com.signagepro.app.core.logging.LogLevel
-import com.signagepro.app.core.logging.ContentSyncResult
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.security.SecureStorage
 import com.signagepro.app.core.utils.BandwidthThrottler
@@ -150,14 +149,7 @@ class ContentSyncManager @Inject constructor(
 
                 // Log sync results
                 val duration = System.currentTimeMillis() - startTime
-                val result = com.signagepro.app.core.logging.ContentSyncResult(
-                    newContentCount = newContentCount,
-                    updatedContentCount = updatedContentCount,
-                    deletedContentCount = deletedContentCount,
-                    totalSize = totalSize,
-                    duration = duration
-                )
-                _syncResult.value = com.signagepro.app.core.sync.ContentSyncResult(
+                val syncResult = ContentSyncResult(
                     newContentCount = newContentCount,
                     updatedContentCount = updatedContentCount,
                     deletedContentCount = deletedContentCount,
@@ -166,13 +158,25 @@ class ContentSyncManager @Inject constructor(
                     success = true, // Assuming success if no major error
                     errorMessage = null
                 )
-                diagnosticLogger.logContentSync(result)
+                _syncResult.value = syncResult
+                diagnosticLogger.logContentSync(syncResult.toLoggingResult())
 
             } catch (e: Exception) {
                 diagnosticLogger.logError(
                     "ContentSync",
                     "Content sync failed",
                     e
+                )
+                
+                // Set error result
+                _syncResult.value = ContentSyncResult(
+                    newContentCount = 0,
+                    updatedContentCount = 0,
+                    deletedContentCount = 0,
+                    totalSize = 0,
+                    duration = System.currentTimeMillis() - startTime,
+                    success = false,
+                    errorMessage = e.message ?: "Unknown error during content sync"
                 )
             } finally {
                 _currentItem.value = null
