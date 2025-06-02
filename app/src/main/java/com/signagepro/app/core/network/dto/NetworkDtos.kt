@@ -7,82 +7,89 @@ import com.signagepro.app.core.data.local.model.MediaItemEntity
 
 // --- AUTHENTICATION --- //
 data class AuthRequest(
-    val hardware_id: String,
-    val tenant_id: String
+    @SerializedName("hardware_id") val hardware_id: String,
+    @SerializedName("tenant_id") val tenant_id: String
 )
 
 data class AuthResponse(
-    val success: Boolean,
-    val token: String,
-    val device_id: String,
-    val timestamp: String
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("token") val token: String,
+    @SerializedName("device_id") val device_id: String,
+    @SerializedName("timestamp") val timestamp: String
 )
 
 // --- HEARTBEAT --- //
+// Specific HeartbeatRequest for simpler scenarios if needed
+data class HeartbeatRequest(
+    @SerializedName("device_id") val deviceId: String,
+    @SerializedName("status") val status: String,
+    @SerializedName("timestamp") val timestamp: Long
+)
+
 data class HeartbeatMetrics(
-    val cpu_usage: Double,
-    val memory_usage: Double,
-    val uptime: Long
+    @SerializedName("cpu_usage") val cpu_usage: Double,
+    @SerializedName("memory_usage") val memory_usage: Double,
+    @SerializedName("uptime") val uptime: Long
 )
 
 data class ScreenStatus(
-    val power: String, // "on" or "off"
-    val brightness: Int
+    @SerializedName("power") val power: String, // "on" or "off"
+    @SerializedName("brightness") val brightness: Int
 )
 
 data class StorageInfo(
-    val total: Long,
-    val free: Long
+    @SerializedName("total") val total: Long,
+    @SerializedName("free") val free: Long
 )
 
 data class NetworkInfo(
-    val type: String,
-    val signal_strength: Int
+    @SerializedName("type") val type: String,
+    @SerializedName("signal_strength") val signal_strength: Int
 )
 
 data class SystemInfo(
-    val os_version: String,
-    val model: String
+    @SerializedName("os_version") val os_version: String,
+    @SerializedName("model") val model: String
 )
 
 data class HeartbeatRequestV2(
-    val status: String, // "online" or "offline"
-    val ip_address: String,
-    val metrics: HeartbeatMetrics,
-    val app_version: String,
-    val screen_status: ScreenStatus,
-    val storage_info: StorageInfo,
-    val network_info: NetworkInfo,
-    val system_info: SystemInfo
+    @SerializedName("status") val status: String, // "online" or "offline"
+    @SerializedName("ip_address") val ip_address: String,
+    @SerializedName("metrics") val metrics: HeartbeatMetrics,
+    @SerializedName("app_version") val app_version: String,
+    @SerializedName("screen_status") val screen_status: ScreenStatus,
+    @SerializedName("storage_info") val storage_info: StorageInfo,
+    @SerializedName("network_info") val network_info: NetworkInfo,
+    @SerializedName("system_info") val system_info: SystemInfo
 )
 
 data class HeartbeatResponseV2(
-    val success: Boolean,
-    val timestamp: String,
-    val needs_sync: Boolean
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("timestamp") val timestamp: String,
+    @SerializedName("needs_sync") val needs_sync: Boolean
 )
 
 // --- CONTENT --- //
 data class ContentDto(
-    val id: String?,
-    val name: String?,
-    val type: String?,
-    val content_data: Map<String, Any>?,
-    val duration: Int?,
-    val order: Int?,
-    val settings: Map<String, Any>?,
-    val rendered_html: String?,
-    val media_url: String?
+    @SerializedName("id") val id: String?,
+    @SerializedName("name") val name: String?,
+    @SerializedName("type") val type: String?,
+    @SerializedName("content_data") val content_data: Map<String, Any>?,
+    @SerializedName("duration") val duration: Int?,
+    @SerializedName("order") val order: Int?,
+    @SerializedName("settings") val settings: Map<String, Any>?,
+    @SerializedName("rendered_html") val rendered_html: String?,
+    @SerializedName("media_url") val media_url: String?
 )
 
 // --- SCREENS --- //
 data class ScreenDto(
-    val screen_id: String?,
-    val screen_name: String?,
-    val resolution: String?,
-    val orientation: String?,
-    val settings: Map<String, Any>?,
-    val contents: List<ContentDto>?
+    @SerializedName("screen_id") val screen_id: String?,
+    @SerializedName("screen_name") val screen_name: String?,
+    @SerializedName("resolution") val resolution: String?,
+    @SerializedName("orientation") val orientation: String?,
+    @SerializedName("settings") val settings: Map<String, Any>?,
+    @SerializedName("contents") val contents: List<ContentDto>?
 )
 
 // --- Registration --- //
@@ -98,6 +105,14 @@ data class DeviceRegistrationResponse(
     @SerializedName("device_token") val deviceToken: String?, // Bearer token for subsequent requests
     @SerializedName("player_id") val playerId: Long?, // The ID of the player in the backend
     @SerializedName("layout_id") val layoutId: Long? // Initial layout ID if assigned
+)
+
+// --- UPDATE INFO --- //
+data class UpdateInfoDto(
+    @SerializedName("version") val version: String,
+    @SerializedName("download_url") val downloadUrl: String,
+    @SerializedName("release_notes") val releaseNotes: String?,
+    @SerializedName("size_bytes") val sizeBytes: Long?
 )
 
 // DTOs from core.data.model using kotlinx.serialization
