@@ -208,27 +208,33 @@ class DeviceRepositoryImpl @Inject constructor(
                     appPreferencesRepository.saveRegistrationToken(registrationData.registrationToken)
                     sharedPreferencesManager.saveAuthToken(registrationData.registrationToken) // Keep for legacy parts
 
-                    val currentSettings = deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
-                        deviceId = registrationData.deviceId,
-                        playerId = null,
-                        currentLayoutId = null,
-                        registrationToken = null,
-                        lastHeartbeatTimestamp = null,
-                        lastSuccessfulSyncTimestamp = null, // Added default
-                        isRegistered = false,
-                        currentLayoutId = 1L, // Assuming this was the intended layoutId field, maps to currentLayoutId
-                        lastSuccessfulSyncTimestamp = null // Ensure this is present
-                    )
+                    val currentSettings = deviceSettingsDao.getDeviceSettingsSnapshot()
+                    
+                    val newPlayerId = registrationData.playerInfo?.playerId?.toLongOrNull()
+                    val newLayoutId = registrationData.playerInfo?.layoutId?.toLongOrNull() // Convert String? to Long?
 
-                    val updatedSettings = currentSettings.copy(
-                        deviceId = registrationData.deviceId,
-                        registrationToken = registrationData.registrationToken,
-                        isRegistered = true,
-                        playerId = null, // Explicitly setting playerId
-                        currentLayoutId = registrationData.layoutId, // Using layoutId from registrationData for currentLayoutId
-                        lastSuccessfulSyncTimestamp = currentSettings.lastSuccessfulSyncTimestamp // Preserve existing or set to null if not available
-                    )
-                    deviceSettingsDao.saveDeviceSettings(updatedSettings)
+                    val settingsToSave = if (currentSettings == null) {
+                        DeviceSettingsEntity(
+                            id = 1, // Explicitly set the ID
+                            deviceId = registrationData.deviceId,
+                            playerId = newPlayerId,
+                            currentLayoutId = newLayoutId,
+                            registrationToken = registrationData.registrationToken,
+                            lastHeartbeatTimestamp = null,
+                            lastSuccessfulSyncTimestamp = null,
+                            isRegistered = true
+                        )
+                    } else {
+                        currentSettings.copy(
+                            deviceId = registrationData.deviceId,
+                            registrationToken = registrationData.registrationToken,
+                            isRegistered = true,
+                            playerId = newPlayerId ?: currentSettings.playerId, // Use new if available, else keep old
+                            currentLayoutId = newLayoutId ?: currentSettings.currentLayoutId // Use new if available, else keep old
+                            // lastSuccessfulSyncTimestamp is preserved by default in copy if not specified
+                        )
+                     }
+                     deviceSettingsDao.saveDeviceSettings(settingsToSave)
 
                     sharedPreferencesManager.setDeviceRegistered(true)
                     emit(Result.Success(true))

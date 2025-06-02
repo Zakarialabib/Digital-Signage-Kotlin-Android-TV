@@ -57,21 +57,43 @@ class RegistrationViewModel @Inject constructor(
                 val currentSettings = deviceSettingsRepository.getDeviceSettings()
                 val actualHardwareId = if (hardwareId.isNotEmpty()) hardwareId else currentSettings.deviceId // Or generate a new one
 
-                val request = RegistrationRequest(tenantId = tenantId, hardwareId = actualHardwareId, deviceName = "SignagePro Device") // Add other relevant fields
-                val response = apiService.registerDevice(request) // Ensure this suspend fun exists in ApiService
+                // Construct the V2 RegistrationRequest. Note: `hardwareId` is part of `deviceId` in the new DTO.
+                // Assuming `actualHardwareId` is the intended `deviceId` for registration.
+                // `deviceName` and `appVersion` would ideally come from device info or constants.
+                val request = RegistrationRequest(
+                    deviceId = actualHardwareId, 
+                    deviceName = "SignagePro Device", // Placeholder, consider making this dynamic
+                    appVersion = com.signagepro.app.BuildConfig.VERSION_NAME, // Use actual app version
+                    tenantId = tenantId,
+                    deviceInfo = RegistrationRequest.DeviceInfo(
+                        model = android.os.Build.MODEL,
+                        manufacturer = android.os.Build.MANUFACTURER,
+                        osVersion = android.os.Build.VERSION.RELEASE,
+                        sdkVersion = android.os.Build.VERSION.SDK_INT.toString(),
+                        screenResolution = "1920x1080" // TODO: Get actual screen resolution dynamically
+                    )
+                )
+                val response = apiService.registerDevice(request)
 
-                if (response.success && response.data != null) {
-                    val deviceId = response.data.deviceId
-                    val regToken = response.data.registrationToken
-                    deviceSettingsRepository.updateDeviceId(deviceId, true)
-                    deviceSettingsRepository.updateTenantId(tenantId) // Add this to DeviceSettingsRepository & Entity
-                    appPreferencesRepository.saveRegistrationToken(regToken) // Add this to AppPreferencesRepository
-                    registrationState = RegistrationState.Success(deviceId, regToken)
-                    logger.i("Device registered successfully. Device ID: $deviceId")
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    if (!body.registrationToken.isNullOrBlank() && !body.deviceId.isNullOrBlank()) {
+                        val deviceId = body.deviceId!!
+                        val regToken = body.registrationToken!!
+                        deviceSettingsRepository.updateDeviceId(deviceId, true)
+                        deviceSettingsRepository.updateTenantId(tenantId) 
+                        appPreferencesRepository.saveRegistrationToken(regToken) 
+                        registrationState = RegistrationState.Success(deviceId, regToken)
+                        logger.i("Device registered successfully. Device ID: $deviceId")
+                    } else {
+                        val errorMessage = body.message ?: "Registration failed: Missing token or device ID in response."
+                        registrationState = RegistrationState.Error(errorMessage)
+                        logger.w("Registration failed: $errorMessage")
+                    }
                 } else {
-                    val errorMessage = response.message ?: "Registration failed. Please check details and try again."
-                    registrationState = RegistrationState.Error(errorMessage)
-                    logger.w("Registration failed: $errorMessage")
+                    val errorBody = response.errorBody()?.string() ?: "Unknown registration error."
+                    registrationState = RegistrationState.Error(errorBody)
+                    logger.w("Registration failed: $errorBody")
                 }
             } catch (e: Exception) {
                 logger.e("Registration exception: ${e.message}", e)

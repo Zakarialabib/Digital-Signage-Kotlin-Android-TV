@@ -45,22 +45,41 @@ data class ScreenDto(
     val contents: List<ContentDto>?
 )
 
-// --- Registration --- //
-data class DeviceRegistrationRequest(
-    @SerializedName("device_id") val deviceId: String, // Unique hardware ID
-    @SerializedName("device_name") val deviceName: String, // e.g., "Living Room TV"
-    @SerializedName("device_type") val deviceType: String = "android_tv",
-    @SerializedName("app_version") val appVersion: String
-)
+// --- Registration (V2 with kotlinx.serialization) --- //
+@Serializable
+data class RegistrationRequest(
+    val deviceId: String,
+    val deviceName: String,
+    val appVersion: String,
+    val tenantId: String,
+    val deviceInfo: DeviceInfo
+) {
+    @Serializable
+    data class DeviceInfo(
+        val model: String,
+        val manufacturer: String,
+        val osVersion: String,
+        val sdkVersion: String,
+        val screenResolution: String
+    )
+}
 
-data class DeviceRegistrationResponse(
-    @SerializedName("message") val message: String,
-    @SerializedName("device_token") val deviceToken: String?, // Bearer token for subsequent requests
-    @SerializedName("player_id") val playerId: Long?, // The ID of the player in the backend
-    @SerializedName("layout_id") val layoutId: Long? // Initial layout ID if assigned
-)
+@Serializable
+data class RegistrationResponse(
+    val registrationToken: String? = null,
+    val deviceId: String? = null,
+    val settings: Settings? = null,
+    val message: String? = null,
+    val success: Boolean? = null // Assuming API might return a success flag
+) {
+    @Serializable
+    data class Settings(
+        val playerId: String?, // Changed to String to match potential SharedPreferencesManager usage
+        val layoutId: String?  // Changed to String to match potential SharedPreferencesManager usage
+    )
+}
 
-// DTOs from core.data.model using kotlinx.serialization
+// DTOs from core.data.model using kotlinx.serialization (Original Ktx versions, review if still needed)
 @Serializable
 data class DeviceRegistrationRequestKtx(
     val deviceId: String, // Unique identifier for the TV device (e.g., Android ID)
