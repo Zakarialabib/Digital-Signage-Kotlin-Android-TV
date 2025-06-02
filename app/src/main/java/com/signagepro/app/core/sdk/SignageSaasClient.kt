@@ -6,28 +6,13 @@ import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.model.DeviceRegistration
 import com.signagepro.app.core.network.ApiService
-import com.signagepro.app.core.network.dto.AuthRequest
-import com.signagepro.app.core.network.dto.AuthResponse
-import com.signagepro.app.core.network.dto.ContentDto
-import com.signagepro.app.core.network.dto.MediaItemDto
-import com.signagepro.app.core.network.dto.UpdateInfoDto
-import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
-import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
-import com.signagepro.app.core.network.dto.HeartbeatRequest // Serializable DTO from its own file
-import com.signagepro.app.core.network.dto.HeartbeatResponse // Serializable DTO from its own file
-import com.signagepro.app.core.network.dto.HeartbeatMetrics // Serializable DTO from HeartbeatRequest.kt
-import com.signagepro.app.core.network.dto.SystemInfo // Serializable DTO from HeartbeatRequest.kt
-// For ScreenStatus, StorageInfo, NetworkInfo, we'll use the ones from com.signagepro.app.core.utils.dto which are now @Serializable
-import com.signagepro.app.core.utils.dto.ScreenStatus
-import com.signagepro.app.core.utils.dto.StorageInfo
-import com.signagepro.app.core.utils.dto.NetworkInfo
+import com.signagepro.app.core.network.dto.*
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import okhttp3.MediaType.Companion.toMediaType
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,33 +30,27 @@ class SignageSaasClient @Inject constructor(
             }
     }
 
-    suspend fun registerDevice(device: com.signagepro.app.core.model.DeviceRegistration, tenantId: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun registerDevice(device: DeviceRegistration): Result<String> = withContext(Dispatchers.IO) {
         try {
             val request = DeviceRegistrationRequest(
                 deviceId = device.deviceId,
                 deviceName = device.deviceName,
-                appVersion = device.appVersion,
-                tenantId = tenantId,
-                hardwareId = device.deviceId,
-                deviceType = "android_player",
-                deviceInfo = device.deviceInfo
+                deviceType = "android_tv",
+                appVersion = device.appVersion
             )
             val response = apiService.registerDevice(request)
-            if (response.isSuccessful && response.body() != null) {
-                val registrationResponse = response.body()!!
-                if (registrationResponse.success && registrationResponse.data != null) {
-                    val registrationData = registrationResponse.data
-                    prefs.saveAuthToken(registrationData.registrationToken)
-                    prefs.saveDeviceId(registrationData.deviceId)
+            if (response.isSuccessful) {
+                val token = response.body()?.data?.deviceToken
+                if (!token.isNullOrBlank()) {
+                    prefs.saveAuthToken(token)
+                    prefs.saveDeviceId(device.deviceId)
                     prefs.setDeviceRegistered(true)
-                    registrationData.playerInfo?.playerId?.let { prefs.savePlayerId(it) }
-                    registrationData.playerInfo?.layoutId?.let { prefs.saveLayoutId(it) }
-                    Result.Success(registrationData.registrationToken)
+                    Result.Success(token)
                 } else {
-                    Result.Error(Exception(registrationResponse.message ?: "No registration token returned"))
+                    Result.Error(Exception("No device token returned"))
                 }
             } else {
-                Result.Error(Exception(response.errorBody()?.string() ?: "Registration failed"))
+                Result.Error(Exception(response.errorBody()?.string() ?: "Unknown error"))
             }
         } catch (e: Exception) {
             Result.Error(e)
@@ -103,13 +82,13 @@ class SignageSaasClient @Inject constructor(
     suspend fun sendHeartbeat(
         deviceId: String,
         ipAddress: String,
-        metrics: com.signagepro.app.core.network.dto.HeartbeatMetrics, // Explicitly use the serializable one
-        screenStatus: com.signagepro.app.core.utils.dto.ScreenStatus, // Explicitly use the serializable one
-        storageInfo: com.signagepro.app.core.utils.dto.StorageInfo, // Explicitly use the serializable one
-        networkInfo: com.signagepro.app.core.utils.dto.NetworkInfo // Explicitly use the serializable one
-    ): Result<com.signagepro.app.core.network.dto.HeartbeatResponse> = withContext(Dispatchers.IO) { // Explicitly use the serializable one
+        metrics: HeartbeatMetrics,
+        screenStatus: ScreenStatus,
+        storageInfo: StorageInfo,
+        networkInfo: NetworkInfo
+    ): Result<HeartbeatResponseV2> = withContext(Dispatchers.IO) {
         try {
-            val request = HeartbeatRequest(
+            val request = HeartbeatRequestV2(
                 status = "online",
                 ip_address = ipAddress,
                 metrics = metrics,
@@ -117,7 +96,7 @@ class SignageSaasClient @Inject constructor(
                 screen_status = screenStatus,
                 storage_info = storageInfo,
                 network_info = networkInfo,
-                system_info = com.signagepro.app.core.network.dto.SystemInfo( // Explicitly use the serializable one
+                system_info = SystemInfo(
                     os_version = Build.VERSION.RELEASE,
                     model = Build.MODEL
                 )
@@ -188,14 +167,9 @@ class SignageSaasClient @Inject constructor(
         fun setApiService(apiService: ApiService) = apply { this.apiService = apiService }
 
         fun build(): SignageSaasClient {
-            val json = kotlinx.serialization.json.Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-                encodeDefaults = false
-            }
             val retrofit = Retrofit.Builder()
                 .baseUrl(baseUrl)
-                .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+                .addConverterFactory(GsonConverterFactory.create())
                 .build()
             val api = apiService ?: retrofit.create(ApiService::class.java)
             val sharedPrefs = prefs ?: SharedPreferencesManager(
@@ -204,4 +178,4 @@ class SignageSaasClient @Inject constructor(
             return getInstance(context, api, sharedPrefs)
         }
     }
-}
+} 

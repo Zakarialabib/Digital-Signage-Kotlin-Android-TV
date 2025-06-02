@@ -11,8 +11,7 @@ import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.*
 import com.signagepro.app.core.utils.Logger
-import com.signagepro.app.core.logging.LogLevel
-import com.signagepro.app.core.utils.NetworkUtils // This should now resolve
+import com.signagepro.app.core.utils.NetworkUtils
 import com.signagepro.app.core.utils.SystemMetrics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -48,7 +47,7 @@ class HeartbeatWorker @AssistedInject constructor(
                 uptime = System.currentTimeMillis() / 1000 // Convert to seconds
             )
 
-            val request = HeartbeatRequest(
+            val request = HeartbeatRequestV2(
                 status = "online",
                 ip_address = NetworkUtils.getLocalIpAddress(),
                 metrics = metrics,
@@ -79,14 +78,14 @@ class HeartbeatWorker @AssistedInject constructor(
                         .enqueue(syncWorkRequest)
                 }
                 
-                return Result.success()
+                Result.success()
             } else {
                 Logger.e("HeartbeatWorker: Failed to send heartbeat. ${response.errorBody()?.string()}")
-                return Result.retry()
+                Result.retry()
             }
         } catch (e: Exception) {
             Logger.e("HeartbeatWorker: Error sending heartbeat", e)
-            return Result.retry()
+            Result.retry()
         }
     }
 }

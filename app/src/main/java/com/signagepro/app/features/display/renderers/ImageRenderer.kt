@@ -50,7 +50,10 @@ fun ImageRenderer(mediaItem: MediaItemEntity) {
                 .build(),
             contentDescription = "Display Image: ${mediaItem.filename ?: mediaItem.id}",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit // Or make this configurable via MediaItemEntity.meta
+            contentScale = ContentScale.Fit // Or make this configurable via MediaItemEntity.meta,
+            onState = { state ->
+                // This is another way to observe state, but listener above is more direct for error/success
+            }
         )
 
         if (isLoading) {
