@@ -1,5 +1,9 @@
 package com.signagepro.app.core.logging
 
+// Explicit imports, even from the same package, to be absolutely clear to the compiler
+import com.signagepro.app.core.logging.LogLevel
+import com.signagepro.app.core.logging.ContentSyncResult
+
 import android.content.Context
 import android.util.Log
 import com.signagepro.app.core.security.SecureStorage
@@ -84,11 +88,12 @@ class DiagnosticLogger @Inject constructor(
     }
 
     suspend fun logContentSync(syncResult: ContentSyncResult) = withContext(Dispatchers.IO) {
+        val statusMessage = if (syncResult.success) "Sync successful" else "Sync failed: ${syncResult.errorMessage ?: "Unknown error"}"
         log(
             level = LogLevel.INFO,
             tag = "ContentSync",
             message = """
-                Sync completed:
+                $statusMessage
                 - New content items: ${syncResult.newContentCount}
                 - Updated items: ${syncResult.updatedContentCount}
                 - Deleted items: ${syncResult.deletedContentCount}
@@ -107,37 +112,4 @@ class DiagnosticLogger @Inject constructor(
     }
 }
 
-enum class LogLevel {
-    DEBUG, INFO, WARNING, ERROR
-}
-
-data class SystemMetrics(
-    val cpuUsage: Float,
-    val memoryUsage: Float,
-    val storageInfo: StorageInfo,
-    val networkInfo: NetworkInfo,
-    val batteryInfo: BatteryInfo
-)
-
-data class StorageInfo(
-    val total: Long,
-    val free: Long
-)
-
-data class NetworkInfo(
-    val type: String,
-    val signalStrength: Int
-)
-
-data class BatteryInfo(
-    val level: Int,
-    val isCharging: Boolean
-)
-
-data class ContentSyncResult(
-    val newContentCount: Int,
-    val updatedContentCount: Int,
-    val deletedContentCount: Int,
-    val totalSize: Long,
-    val duration: Long
-) 
+// Data classes moved to their respective files to avoid redeclaration errors

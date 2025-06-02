@@ -14,7 +14,10 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "app_preferences")
+// Changed from private to internal, or could be public if needed by other modules directly
+// though the repository pattern should encapsulate this.
+// For now, let's make it accessible within the module.
+internal val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "app_preferences")
 
 @Singleton
 class AppPreferencesRepository @Inject constructor(

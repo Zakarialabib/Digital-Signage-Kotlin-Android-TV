@@ -19,48 +19,8 @@ data class AuthResponse(
 )
 
 // --- HEARTBEAT --- //
-data class HeartbeatMetrics(
-    val cpu_usage: Double,
-    val memory_usage: Double,
-    val uptime: Long
-)
-
-data class ScreenStatus(
-    val power: String, // "on" or "off"
-    val brightness: Int
-)
-
-data class StorageInfo(
-    val total: Long,
-    val free: Long
-)
-
-data class NetworkInfo(
-    val type: String,
-    val signal_strength: Int
-)
-
-data class SystemInfo(
-    val os_version: String,
-    val model: String
-)
-
-data class HeartbeatRequest(
-    val status: String, // "online" or "offline"
-    val ip_address: String,
-    val metrics: HeartbeatMetrics,
-    val app_version: String,
-    val screen_status: ScreenStatus,
-    val storage_info: StorageInfo,
-    val network_info: NetworkInfo,
-    val system_info: SystemInfo
-)
-
-data class HeartbeatResponse(
-    val success: Boolean,
-    val timestamp: String,
-    val needs_sync: Boolean
-)
+// HeartbeatRequest, HeartbeatMetrics, SystemInfo, and HeartbeatResponse are (or should be) defined in their own files with @Serializable
+// ScreenStatus, StorageInfo, NetworkInfo are expected to be in com.signagepro.app.core.utils.dto and should also be @Serializable
 
 // --- CONTENT --- //
 data class ContentDto(
@@ -150,39 +110,9 @@ data class LayoutDto(
     @SerializedName("items") val items: List<MediaItemDto>
 )
 
-// --- Heartbeat and Commands (from ApplicationStatus.kt) --- //
-@Serializable
-data class HeartbeatRequestKtx(
-    val deviceId: String,
-    val timestamp: Long,
-    // Changed from ApplicationStatus to Map<String, String> for simplicity in DTO
-    // The full ApplicationStatus can be constructed or used on the domain layer if needed.
-    val currentStatus: Map<String, String> 
-)
-
-@Serializable
-data class HeartbeatResponseKtx(
-    val success: Boolean,
-    val nextHeartbeatIntervalSeconds: Int? = null,
-    val commands: List<DeviceCommandKtx>? = null
-)
-
-@Serializable
-sealed class DeviceCommandKtx {
-    abstract val commandId: String
-
-    @Serializable
-    data class RestartAppKtx(override val commandId: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class UpdateContentKtx(override val commandId: String, val playlistId: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class UpdateAppSettingsKtx(override val commandId: String, val settingsJson: String) : DeviceCommandKtx()
-
-    @Serializable
-    data class TakeScreenshotKtx(override val commandId: String, val uploadUrl: String) : DeviceCommandKtx()
-}
+// --- Heartbeat and Commands --- //
+// HeartbeatRequestKtx, HeartbeatResponseKtx, and DeviceCommandKtx are defined in their respective files
+// to avoid redeclaration errors
 
 fun MediaItemDto.toEntity(): MediaItemEntity {
     return MediaItemEntity(

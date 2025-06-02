@@ -82,11 +82,11 @@ class HeartbeatWorker @AssistedInject constructor(
                 return Result.success()
             } else {
                 Logger.e("HeartbeatWorker: Failed to send heartbeat. ${response.errorBody()?.string()}")
-                Result.retry()
+                return Result.retry()
             }
         } catch (e: Exception) {
             Logger.e("HeartbeatWorker: Error sending heartbeat", e)
-            Result.retry()
+            return Result.retry()
         }
     }
 }

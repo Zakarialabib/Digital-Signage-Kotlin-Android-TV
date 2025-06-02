@@ -32,18 +32,19 @@ class DeviceRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val deviceSettingsDao: DeviceSettingsDao,
     private val sharedPreferencesManager: SharedPreferencesManager,
-    private val dispatchers: CoroutineDispatchers
+    private val dispatchers: CoroutineDispatchers,
+    private val appPreferencesRepository: AppPreferencesRepository // Added for registration token
 ) : DeviceRepository {
 
-    override suspend fun registerDevice(request: DeviceRegistrationRequest): Flow<Result<DeviceRegistrationResponse>> {
+    override suspend fun registerDevice(request: DeviceRegistrationRequest): Flow<com.signagepro.app.core.utils.Result<DeviceRegistrationResponse>> {
         // DeviceRegistrationResponse is imported from com.signagepro.app.core.network.dto
         // TODO: Implement actual logic to call backend API
         // For now, returning a dummy success response using the DTO structure
         val dummyDtoResponse = DeviceRegistrationResponse(
             message = "Device registered successfully (mock DTO)",
-            deviceToken = "dummy-dto-api-key-12345",
-            playerId = 101L,
-            layoutId = 202L 
+            deviceToken = "dummy-device-token-12345",
+            playerId = 1L,
+            layoutId = 1L
         )
         return kotlinx.coroutines.flow.flowOf(Result.Success(dummyDtoResponse))
     }
@@ -173,43 +174,58 @@ class DeviceRepositoryImpl @Inject constructor(
             }
 
             val appVersion = BuildConfig.VERSION_NAME
-            val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}" 
+            val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
 
-            val requestDto = com.signagepro.app.core.network.dto.DeviceRegistrationRequest( // Explicitly use DTO for request
+            // Fully qualify the V2 DTO to avoid ambiguity
+            val requestDto = com.signagepro.app.core.network.dto.RegistrationRequest(
                 deviceId = currentDeviceId,
                 deviceName = deviceName,
-                appVersion = appVersion
-                // registrationCode is not in this DTO version, check API contract if it's needed via different DTO/field
+                appVersion = appVersion,
+                tenantId = sharedPreferencesManager.getTenantId() ?: "", // Assuming tenantId is needed and stored
+                deviceInfo = com.signagepro.app.core.network.dto.RegistrationRequest.DeviceInfo(
+                    model = Build.MODEL,
+                    manufacturer = Build.MANUFACTURER,
+                    osVersion = Build.VERSION.RELEASE,
+                    sdkVersion = Build.VERSION.SDK_INT.toString(),
+                    screenResolution = "1920x1080" // TODO: Get actual screen resolution
+                )
             )
 
-            val retrofitResponse = apiService.registerDevice(requestDto) // This uses the DTO request
+            val retrofitResponse = apiService.registerDevice(requestDto)
 
             if (retrofitResponse.isSuccessful && retrofitResponse.body() != null) {
-                val apiResponseBody = retrofitResponse.body()!! // GenericApiResponse<dto.DeviceRegistrationResponse>
-                if (apiResponseBody.status == "success" && apiResponseBody.data != null) {
-                    val data = apiResponseBody.data!! // This is dto.DeviceRegistrationResponse
-                    sharedPreferencesManager.saveAuthToken(data.deviceToken)
-                    // Update DeviceSettingsEntity
-                    val updatedSettings = (deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
-                        deviceId = currentDeviceId,
+                // Fully qualify the V2 DTO and explicitly type to avoid ambiguity
+                val registrationResponse: com.signagepro.app.core.network.dto.RegistrationResponse = retrofitResponse.body()!!
+                
+                if (registrationResponse.success && registrationResponse.data != null) {
+                    val registrationData = registrationResponse.data!!
+                    appPreferencesRepository.saveRegistrationToken(registrationData.registrationToken)
+                    sharedPreferencesManager.saveAuthToken(registrationData.registrationToken) // Keep for legacy parts
+
+                    val currentSettings = deviceSettingsDao.getDeviceSettingsSnapshot() ?: DeviceSettingsEntity(
+                        deviceId = registrationData.deviceId,
                         playerId = null,
                         currentLayoutId = null,
                         registrationToken = null,
                         lastHeartbeatTimestamp = null,
                         lastSuccessfulSyncTimestamp = null
-                    ))
-                        .copy(
-                            registrationToken = data.deviceToken,
+                    )
+
+                    val updatedSettings = currentSettings.copy(
+                            registrationToken = registrationData.registrationToken,
                             isRegistered = true,
-                            playerId = data.playerId,
-                            currentLayoutId = data.layoutId ?: deviceSettingsDao.getDeviceSettingsSnapshot()?.currentLayoutId // Preserve if null
+                            // Set default values since RegistrationResponse doesn't have these fields
+                            playerId = null,
+                            currentLayoutId = null,
+                            // Ensure deviceId from response is used
+                            deviceId = registrationData.deviceId 
                         )
                     deviceSettingsDao.saveDeviceSettings(updatedSettings)
-                    
+
                     sharedPreferencesManager.setDeviceRegistered(true)
                     emit(Result.Success(true))
                 } else {
-                    emit(Result.Error(Exception(apiResponseBody.message ?: "Registration API logic error")))
+                    emit(Result.Error(Exception(registrationResponse.message ?: "Registration failed: No token or error message")))
                 }
             } else {
                 emit(Result.Error(Exception(retrofitResponse.errorBody()?.string() ?: "Registration failed HTTP ${retrofitResponse.code()}")))
