@@ -48,17 +48,12 @@ class SignageSaasClient @Inject constructor(
     suspend fun registerDevice(device: DeviceRegistration, tenantId: String): Result<String> = withContext(Dispatchers.IO) {
         try {
             val request = RegistrationRequest( // V2 DTO
-                deviceId = device.deviceId,
+                hardwareId = device.deviceId, // Corrected: Use hardwareId, maps to hardware_id in DTO
                 deviceName = device.deviceName,
                 appVersion = device.appVersion,
-                tenantId = tenantId, // Added tenantId
-                deviceInfo = RegistrationRequest.DeviceInfo(
-                    model = Build.MODEL,
-                    manufacturer = Build.MANUFACTURER,
-                    osVersion = Build.VERSION.RELEASE,
-                    sdkVersion = Build.VERSION.SDK_INT.toString(),
-                    screenResolution = "1920x1080" // TODO: Get actual screen resolution
-                )
+                tenantId = tenantId,
+                deviceType = "android_player" // Explicitly set or get from device model if available
+                // Removed deviceInfo block as it's not part of RegistrationRequest DTO
             )
             val response = apiService.registerDevice(request) // apiService.registerDevice now expects V2 RegistrationRequest
             if (response.isSuccessful && response.body() != null) {

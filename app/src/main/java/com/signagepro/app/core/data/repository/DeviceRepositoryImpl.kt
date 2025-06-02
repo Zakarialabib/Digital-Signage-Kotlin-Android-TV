@@ -41,11 +41,21 @@ class DeviceRepositoryImpl @Inject constructor(
         // DeviceRegistrationResponse is imported from com.signagepro.app.core.network.dto
         // TODO: Implement actual logic to call backend API
         // For now, returning a dummy success response using the DTO structure
+        val playerInfo = PlayerInfo(
+            playerId = "1",
+            layoutId = "1"
+        )
+        
+        val registrationData = RegistrationData(
+            deviceId = request.deviceId,
+            registrationToken = "dummy-device-token-12345",
+            playerInfo = playerInfo
+        )
+        
         val dummyDtoResponse = DeviceRegistrationResponse(
+            success = true,
             message = "Device registered successfully (mock DTO)",
-            deviceToken = "dummy-device-token-12345",
-            playerId = 1L,
-            layoutId = 1L
+            data = registrationData
         )
         return kotlinx.coroutines.flow.flowOf(Result.Success(dummyDtoResponse))
     }

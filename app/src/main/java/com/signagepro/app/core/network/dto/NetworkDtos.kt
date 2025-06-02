@@ -46,6 +46,7 @@ data class ScreenDto(
 )
 
 // --- Registration (V2 with kotlinx.serialization) --- //
+/*
 @Serializable
 data class RegistrationRequest(
     val deviceId: String,
@@ -78,6 +79,7 @@ data class RegistrationResponse(
         val layoutId: String?  // Changed to String to match potential SharedPreferencesManager usage
     )
 }
+*/
 
 // DTOs from core.data.model using kotlinx.serialization (Original Ktx versions, review if still needed)
 @Serializable
