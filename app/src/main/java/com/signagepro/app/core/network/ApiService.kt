@@ -1,7 +1,7 @@
 package com.signagepro.app.core.network
 
-import com.signagepro.app.core.network.dto.RegistrationRequest
-import com.signagepro.app.core.network.dto.RegistrationResponse
+import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
+import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
 import com.signagepro.app.core.network.dto.GenericApiResponse
 import com.signagepro.app.core.network.dto.LayoutDto
 import com.signagepro.app.core.network.dto.SimpleSuccessResponse
@@ -28,7 +28,7 @@ import retrofit2.http.*
 interface ApiService {
 
     @POST(Constants.ENDPOINT_REGISTER_DEVICE) // Ensure this constant points to the correct V2 endpoint, e.g., "/api/v2/device/register"
-    suspend fun registerDevice(@Body request: RegistrationRequest): Response<RegistrationResponse>
+    suspend fun registerDevice(@Body request: DeviceRegistrationRequest): Response<DeviceRegistrationResponse>
 
     // Example: Get device status (might not be needed if registration returns all info)
     // @GET(Constants.ENDPOINT_DEVICE_STATUS)

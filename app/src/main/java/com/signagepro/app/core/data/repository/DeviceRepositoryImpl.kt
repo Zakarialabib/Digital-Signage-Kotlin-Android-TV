@@ -3,6 +3,8 @@ package com.signagepro.app.core.data.repository
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import android.util.DisplayMetrics
+import android.view.WindowManager
 import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
@@ -123,6 +125,27 @@ class DeviceRepositoryImpl @Inject constructor(
         }
         return deviceId
     }
+    
+    /**
+     * Gets the screen resolution of the device in the format "widthxheight".
+     */
+    private fun getScreenResolution(context: Context): String {
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val displayMetrics = DisplayMetrics()
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val display = windowManager.currentWindowMetrics
+            val width = display.bounds.width()
+            val height = display.bounds.height()
+            return "${width}x${height}"
+        } else {
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getMetrics(displayMetrics)
+            val width = displayMetrics.widthPixels
+            val height = displayMetrics.heightPixels
+            return "${width}x${height}"
+        }
+    }
 
     override suspend fun saveDeviceId(deviceId: String) {
         sharedPreferencesManager.saveDeviceId(deviceId)
@@ -198,20 +221,33 @@ class DeviceRepositoryImpl @Inject constructor(
             val appVersion = BuildConfig.VERSION_NAME
             val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
 
-            // Fully qualify the V2 DTO to avoid ambiguity
-            val requestDto = com.signagepro.app.core.network.dto.RegistrationRequest(
-                tenantId = sharedPreferencesManager.getTenantId() ?: "",
-                hardwareId = currentDeviceId,
+            // Create device info object
+            val deviceInfo = DeviceInfo(
+                deviceId = currentDeviceId,
                 deviceName = deviceName,
+                model = Build.MODEL,
+                manufacturer = Build.MANUFACTURER,
+                osVersion = Build.VERSION.RELEASE,
+                sdkVersion = Build.VERSION.SDK_INT.toString(),
+                appVersion = appVersion,
+                screenResolution = getScreenResolution(context)
+            )
+
+            // Create the registration request
+            val requestDto = DeviceRegistrationRequest(
+                deviceId = currentDeviceId,
+                deviceName = deviceName,
+                hardwareId = currentDeviceId,
                 deviceType = "android_player",
-                appVersion = appVersion
+                appVersion = appVersion,
+                tenantId = sharedPreferencesManager.getTenantId(),
+                deviceInfo = deviceInfo
             )
 
             val retrofitResponse = apiService.registerDevice(requestDto)
 
             if (retrofitResponse.isSuccessful && retrofitResponse.body() != null) {
-                // Fully qualify the V2 DTO and explicitly type to avoid ambiguity
-                val registrationResponse: com.signagepro.app.core.network.dto.RegistrationResponse = retrofitResponse.body()!!
+                val registrationResponse: DeviceRegistrationResponse = retrofitResponse.body()!!
                 
                 if (registrationResponse.success && registrationResponse.data != null) {
                     val registrationData = registrationResponse.data!!
