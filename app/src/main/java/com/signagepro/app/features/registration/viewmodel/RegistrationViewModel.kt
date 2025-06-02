@@ -63,14 +63,17 @@ class RegistrationViewModel @Inject constructor(
                     tenantId = tenantId,
                     hardwareId = actualHardwareId,
                     deviceType = "android_player",
-                    deviceInfo = com.signagepro.app.core.data.model.DeviceInfo(
+                    deviceInfo = com.signagepro.app.core.network.dto.DeviceInfo(
+                        deviceId = actualHardwareId, // Using actualHardwareId from the method's scope
+                        deviceName = "SignagePro Device", // Default device name
                         model = android.os.Build.MODEL,
                         manufacturer = android.os.Build.MANUFACTURER,
                         osVersion = android.os.Build.VERSION.RELEASE,
                         sdkVersion = android.os.Build.VERSION.SDK_INT.toString(),
-                        screenResolution = "1920x1080",
-                        ipAddress = null,
-                        macAddress = null
+                        appVersion = com.signagepro.app.BuildConfig.VERSION_NAME, // Sourced from BuildConfig
+                        screenResolution = "1920x1080", // TODO: Replace with dynamic screen resolution fetch
+                        ipAddress = null, // TODO: Replace with dynamic IP address fetch if available here
+                        macAddress = null // TODO: Replace with dynamic MAC address fetch if available here
                     )
                 )
                 val response = apiService.registerDevice(request)
