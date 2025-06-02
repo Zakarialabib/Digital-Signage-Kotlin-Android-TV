@@ -2,6 +2,7 @@ package com.signagepro.app.core.sync
 
 import android.content.Context
 import com.signagepro.app.core.logging.DiagnosticLogger
+import com.signagepro.app.core.logging.LogLevel
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.security.SecureStorage
 import com.signagepro.app.core.utils.BandwidthThrottler
@@ -37,8 +38,8 @@ class ContentSyncManager @Inject constructor(
     private val _processedItems = MutableStateFlow(0)
     val processedItems: StateFlow<Int> = _processedItems
     
-    private val _syncResult = MutableStateFlow<ContentSyncResult?>(null)
-    val syncResult: StateFlow<ContentSyncResult?> = _syncResult
+    private val _syncResult = MutableStateFlow<com.signagepro.app.core.sync.ContentSyncResult?>(null)
+    val syncResult: StateFlow<com.signagepro.app.core.sync.ContentSyncResult?> = _syncResult
 
     init {
         contentDir.mkdirs()
@@ -62,8 +63,8 @@ class ContentSyncManager @Inject constructor(
         _syncResult.value = null
 
         currentSyncJob = syncScope.launch {
+            val startTime = System.currentTimeMillis()
             try {
-                val startTime = System.currentTimeMillis()
                 val deviceId = secureStorage.getDeviceId()
                     ?: throw IllegalStateException("Device not registered")
 
@@ -113,7 +114,7 @@ class ContentSyncManager @Inject constructor(
                     _currentItem.value = content.name
                     val contentFile = File(contentDir, content.id)
                     val needsDownload = !contentFile.exists() || 
-                        contentFile.lastModified() < content.lastModified
+                        (content.lastModified?.let { contentFile.lastModified() < it } ?: true) // Handle nullable lastModified, download if null
 
                     if (needsDownload) {
                         try {
@@ -148,21 +149,34 @@ class ContentSyncManager @Inject constructor(
 
                 // Log sync results
                 val duration = System.currentTimeMillis() - startTime
-                val result = ContentSyncResult(
+                val syncResult = ContentSyncResult(
                     newContentCount = newContentCount,
                     updatedContentCount = updatedContentCount,
                     deletedContentCount = deletedContentCount,
                     totalSize = totalSize,
-                    duration = duration
+                    duration = duration,
+                    success = true, // Assuming success if no major error
+                    errorMessage = null
                 )
-                _syncResult.value = result
-                diagnosticLogger.logContentSync(result)
+                _syncResult.value = syncResult
+                diagnosticLogger.logContentSync(syncResult.toLoggingResult())
 
             } catch (e: Exception) {
                 diagnosticLogger.logError(
                     "ContentSync",
                     "Content sync failed",
                     e
+                )
+                
+                // Set error result
+                _syncResult.value = ContentSyncResult(
+                    newContentCount = 0,
+                    updatedContentCount = 0,
+                    deletedContentCount = 0,
+                    totalSize = 0,
+                    duration = System.currentTimeMillis() - startTime,
+                    success = false,
+                    errorMessage = e.message ?: "Unknown error during content sync"
                 )
             } finally {
                 _currentItem.value = null
@@ -198,4 +212,4 @@ class ContentSyncManager @Inject constructor(
     fun clearContent() {
         contentDir.listFiles()?.forEach { it.delete() }
     }
-} 
+}

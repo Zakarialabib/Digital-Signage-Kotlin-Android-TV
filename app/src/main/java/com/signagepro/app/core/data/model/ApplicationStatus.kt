@@ -21,5 +21,3 @@ data class ApplicationStatus(
     val isScreenOn: Boolean,
     val deviceTemperature: Float? = null // Optional: device temperature if available
 )
-
-// HeartbeatRequest, HeartbeatResponse, and DeviceCommand hierarchy moved to NetworkDtos.kt

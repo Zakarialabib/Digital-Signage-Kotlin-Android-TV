@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import com.signagepro.app.core.data.local.dao.ContentDao
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.logging.DiagnosticLogger
+import com.signagepro.app.core.logging.LogLevel
 import com.signagepro.app.core.network.ApiService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -87,4 +88,4 @@ class MediaDownloadWorker @AssistedInject constructor(
     companion object {
         const val KEY_CONTENT_ID = "content_id"
     }
-} 
+}

@@ -1,7 +1,9 @@
 package com.signagepro.app.features.onboarding.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.signagepro.app.core.data.local.SharedPreferencesManager
+import com.signagepro.app.core.data.repository.AppPreferencesRepository
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -12,7 +14,7 @@ data class OnboardingContent(
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val sharedPreferencesManager: SharedPreferencesManager
+    private val appPreferencesRepository: AppPreferencesRepository // Changed from SharedPreferencesManager
 ) : ViewModel() {
     
     private val onboardingPages = listOf(
@@ -35,6 +37,8 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun completeOnboarding() {
-        sharedPreferencesManager.setOnboardingCompleted(true)
+        viewModelScope.launch { // Use viewModelScope for suspend function
+            appPreferencesRepository.setOnboardingCompleted(true)
+        }
     }
 }

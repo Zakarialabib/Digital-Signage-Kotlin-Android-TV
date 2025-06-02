@@ -8,6 +8,7 @@ import com.signagepro.app.BuildConfig
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.utils.Logger
+import com.signagepro.app.core.logging.LogLevel // Added LogLevel import
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -105,4 +106,4 @@ class UpdateCheckWorker @AssistedInject constructor(
             null
         }
     }
-} 
+}
