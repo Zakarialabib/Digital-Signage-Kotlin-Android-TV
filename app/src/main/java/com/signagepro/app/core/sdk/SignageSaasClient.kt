@@ -14,14 +14,13 @@ import com.signagepro.app.core.network.dto.MediaItemDto
 import com.signagepro.app.core.network.dto.UpdateInfoDto
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
-import com.signagepro.app.core.network.dto.HeartbeatRequest // Serializable DTO from its own file
-import com.signagepro.app.core.network.dto.HeartbeatResponse // Serializable DTO from its own file
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2 // Serializable DTO from its own file
+import com.signagepro.app.core.network.dto.HeartbeatResponseV2 // Serializable DTO from its own file
 import com.signagepro.app.core.network.dto.HeartbeatMetrics // Serializable DTO from HeartbeatRequest.kt
 import com.signagepro.app.core.network.dto.SystemInfo // Serializable DTO from HeartbeatRequest.kt
-// For ScreenStatus, StorageInfo, NetworkInfo, we'll use the ones from com.signagepro.app.core.utils.dto which are now @Serializable
-import com.signagepro.app.core.utils.dto.ScreenStatus
-import com.signagepro.app.core.utils.dto.StorageInfo
-import com.signagepro.app.core.utils.dto.NetworkInfo
+import com.signagepro.app.core.network.dto.ScreenStatus
+import com.signagepro.app.core.network.dto.StorageInfo
+import com.signagepro.app.core.network.dto.NetworkInfo
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -105,13 +104,13 @@ class SignageSaasClient @Inject constructor(
     suspend fun sendHeartbeat(
         deviceId: String,
         ipAddress: String,
-        metrics: com.signagepro.app.core.network.dto.HeartbeatMetrics, // Explicitly use the serializable one
-        screenStatus: com.signagepro.app.core.utils.dto.ScreenStatus, // Explicitly use the serializable one
-        storageInfo: com.signagepro.app.core.utils.dto.StorageInfo, // Explicitly use the serializable one
-        networkInfo: com.signagepro.app.core.utils.dto.NetworkInfo // Explicitly use the serializable one
-    ): Result<com.signagepro.app.core.network.dto.HeartbeatResponse> = withContext(Dispatchers.IO) { // Explicitly use the serializable one
+        metrics: com.signagepro.app.core.network.dto.HeartbeatMetrics,
+        screenStatus: com.signagepro.app.core.network.dto.ScreenStatus,
+        storageInfo: com.signagepro.app.core.network.dto.StorageInfo,
+        networkInfo: com.signagepro.app.core.network.dto.NetworkInfo
+    ): Result<com.signagepro.app.core.network.dto.HeartbeatResponseV2> = withContext(Dispatchers.IO) {
         try {
-            val request = HeartbeatRequest(
+            val request = HeartbeatRequestV2(
                 status = "online",
                 ip_address = ipAddress,
                 metrics = metrics,
@@ -119,7 +118,7 @@ class SignageSaasClient @Inject constructor(
                 screen_status = screenStatus,
                 storage_info = storageInfo,
                 network_info = networkInfo,
-                system_info = com.signagepro.app.core.network.dto.SystemInfo( // Explicitly use the serializable one
+                system_info = com.signagepro.app.core.network.dto.SystemInfo(
                     os_version = Build.VERSION.RELEASE,
                     model = Build.MODEL
                 )

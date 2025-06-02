@@ -10,7 +10,7 @@ import android.provider.Settings
 import android.view.WindowManager
 import com.signagepro.app.core.utils.dto.ScreenStatus
 import com.signagepro.app.core.utils.dto.StorageInfo
-import com.signagepro.app.core.utils.dto.NetworkInfo
+import com.signagepro.app.core.network.dto.NetworkInfo
 import com.signagepro.app.core.logging.Logger // Assuming Logger is in this package
 import java.io.File
 import java.io.RandomAccessFile
@@ -88,7 +88,7 @@ class SystemMetrics(private val context: Context) {
         )
     }
 
-    fun getNetworkInfo(): com.signagepro.app.core.utils.dto.NetworkInfo {
+    fun getNetworkInfo(): com.signagepro.app.core.network.dto.NetworkInfo {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
@@ -114,7 +114,7 @@ class SystemMetrics(private val context: Context) {
             else -> 0
         }
 
-        return com.signagepro.app.core.utils.dto.NetworkInfo(
+        return com.signagepro.app.core.network.dto.NetworkInfo(
             type = type,
             signal_strength = signalStrength
         )

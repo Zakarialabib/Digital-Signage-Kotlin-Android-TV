@@ -15,8 +15,8 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import com.signagepro.app.core.network.dto.AuthRequest
 import com.signagepro.app.core.network.dto.AuthResponse
-import com.signagepro.app.core.network.dto.HeartbeatRequest // Will be updated to the correct structure
-import com.signagepro.app.core.network.dto.HeartbeatResponse
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2
+import com.signagepro.app.core.network.dto.HeartbeatResponseV2
 import com.signagepro.app.core.network.dto.ContentDto
 import com.signagepro.app.core.network.dto.ScreenDto
 import com.signagepro.app.core.network.dto.MediaItemDto
@@ -50,8 +50,8 @@ interface ApiService {
     @POST("/api/device/heartbeat/{device}")
     suspend fun sendDeviceHeartbeat(
         @Path("device") deviceId: String,
-        @Body request: HeartbeatRequest // Assuming HeartbeatRequest is the correct DTO now
-    ): Response<HeartbeatResponse> // Assuming HeartbeatResponse is the correct DTO now
+        @Body request: HeartbeatRequestV2
+    ): Response<HeartbeatResponseV2>
 
     // CONTENT CRUD
     @GET(Constants.ENDPOINT_CONTENT)

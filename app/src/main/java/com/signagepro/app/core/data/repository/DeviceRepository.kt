@@ -9,8 +9,8 @@ import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
 import com.signagepro.app.core.data.model.DeviceInfo
-import com.signagepro.app.core.network.dto.HeartbeatRequest
-import com.signagepro.app.core.network.dto.HeartbeatResponse
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2
+import com.signagepro.app.core.network.dto.HeartbeatResponseV2
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
@@ -42,7 +42,7 @@ interface DeviceRepository {
     /**
      * Sends a heartbeat signal to the backend with the current application status.
      */
-    suspend fun sendHeartbeat(request: HeartbeatRequest): Flow<com.signagepro.app.core.utils.Result<HeartbeatResponse>>
+    suspend fun sendHeartbeat(request: HeartbeatRequestV2): Flow<com.signagepro.app.core.utils.Result<HeartbeatResponseV2>>
 
     /**
      * Retrieves the stored API key for the device.

@@ -62,13 +62,14 @@ class UpdateCheckWorker @AssistedInject constructor(
                     if (!updateData.downloadUrl.isNullOrBlank()) {
                         val updateFile = downloadUpdate(updateData.downloadUrl)
                         if (updateFile != null) {
-                        Logger.i("UpdateCheckWorker: Update downloaded successfully: ${updateFile.absolutePath}")
-                        // TODO: Trigger system update installation
-                        // This would typically involve using the system's package installer
-                        // or a custom update mechanism
-                    } else {
-                        Logger.e("UpdateCheckWorker: Failed to download update")
-                        return@withContext Result.retry()
+                            Logger.i("UpdateCheckWorker: Update downloaded successfully: ${updateFile.absolutePath}")
+                            // TODO: Trigger system update installation
+                            // This would typically involve using the system's package installer
+                            // or a custom update mechanism
+                        } else {
+                            Logger.e("UpdateCheckWorker: Failed to download update")
+                            return@withContext Result.retry()
+                        }
                     }
                 }
             } else {

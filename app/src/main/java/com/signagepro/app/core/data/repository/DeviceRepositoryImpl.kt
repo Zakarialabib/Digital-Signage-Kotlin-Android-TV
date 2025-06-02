@@ -10,9 +10,9 @@ import com.signagepro.app.core.data.local.SharedPreferencesManager
 import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
-import com.signagepro.app.core.data.model.DeviceInfo
-import com.signagepro.app.core.network.dto.HeartbeatRequest
-import com.signagepro.app.core.network.dto.HeartbeatResponse
+import com.signagepro.app.core.network.dto.DeviceInfo
+import com.signagepro.app.core.network.dto.HeartbeatRequestV2
+import com.signagepro.app.core.network.dto.HeartbeatResponseV2
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
@@ -66,9 +66,9 @@ class DeviceRepositoryImpl @Inject constructor(
         return kotlinx.coroutines.flow.flowOf(Result.Success(dummyDtoResponse))
     }
 
-    override fun getDeviceInfo(): Flow<Result<DeviceInfo>> {
+    override fun getDeviceInfo(): Flow<Result<com.signagepro.app.core.network.dto.DeviceInfo>> {
         // TODO: Implement logic to gather actual device info (Build class, etc.)
-        val dummyInfo = DeviceInfo(
+        val dummyInfo = com.signagepro.app.core.network.dto.DeviceInfo(
             deviceId = getDeviceId(), // Use actual fetched/generated device ID
             deviceName = "${Build.MANUFACTURER} ${Build.MODEL}",
             model = Build.MODEL,
@@ -77,12 +77,13 @@ class DeviceRepositoryImpl @Inject constructor(
             appVersion = BuildConfig.VERSION_NAME,
             screenResolution = "1920x1080", // TODO: Get actual screen resolution
             ipAddress = "10.0.2.15", // TODO: Get actual IP
-            macAddress = "02:00:00:00:00:00" // TODO: Get actual MAC
+            macAddress = "02:00:00:00:00:00", // TODO: Get actual MAC
+            sdkVersion = Build.VERSION.SDK_INT.toString()
         )
         return kotlinx.coroutines.flow.flowOf(Result.Success(dummyInfo))
     }
 
-    override suspend fun sendHeartbeat(request: HeartbeatRequest): Flow<Result<HeartbeatResponse>> {
+    override suspend fun sendHeartbeat(request: HeartbeatRequestV2): Flow<Result<HeartbeatResponseV2>> {
         return flow {
             try {
                 // Make the actual API call using the provided request
@@ -92,13 +93,8 @@ class DeviceRepositoryImpl @Inject constructor(
                 )
                 
                 if (response.isSuccessful && response.body() != null) {
-                    // Convert API response to HeartbeatResponse
-                    val heartbeatResponse = HeartbeatResponse(
-                        success = true,
-                        message = response.body()?.message,
-                        needs_sync = response.body()?.needs_sync ?: false
-                    )
-                    emit(Result.Success(heartbeatResponse))
+                    // API response is already HeartbeatResponseV2
+                    emit(Result.Success(response.body()!!))
                 } else {
                     emit(Result.Error(Exception("Failed to send heartbeat: ${response.message()}")))
                 }
