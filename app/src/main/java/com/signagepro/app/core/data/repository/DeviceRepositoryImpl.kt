@@ -9,8 +9,8 @@ import com.signagepro.app.core.data.local.dao.DeviceSettingsDao
 import com.signagepro.app.core.data.local.model.ApplicationStatusEntity
 import com.signagepro.app.core.data.local.model.DeviceSettingsEntity
 import com.signagepro.app.core.data.model.DeviceInfo
-import com.signagepro.app.core.data.model.HeartbeatRequest
-import com.signagepro.app.core.data.model.HeartbeatResponse
+import com.signagepro.app.core.network.dto.HeartbeatRequest
+import com.signagepro.app.core.network.dto.HeartbeatResponse
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
@@ -68,7 +68,7 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override suspend fun sendHeartbeat(request: HeartbeatRequest): Flow<Result<HeartbeatResponse>> {
         // TODO: Implement actual logic to call backend API
-        // This request is com.signagepro.app.core.data.model.HeartbeatRequest
+        // This request is com.signagepro.app.core.network.dto.HeartbeatRequest
         // The ApiService expects com.signagepro.app.core.network.dto.HeartbeatRequest
         // Needs mapping or DTO directly. For now, dummy.
         val dummyResponse = HeartbeatResponse( // This is model.HeartbeatResponse
