@@ -41,4 +41,5 @@
     <color name="error_container_dark">#93000A</color>
     <color name="on_error_dark">#690005</color>
     <color name="on_error_container_dark">#FFDAD6</color>
-</resources> 
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>
