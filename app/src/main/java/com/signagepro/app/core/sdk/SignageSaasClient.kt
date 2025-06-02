@@ -11,8 +11,8 @@ import com.signagepro.app.core.network.dto.AuthResponse
 import com.signagepro.app.core.network.dto.ContentDto
 import com.signagepro.app.core.network.dto.MediaItemDto
 import com.signagepro.app.core.network.dto.UpdateInfoDto
-import com.signagepro.app.core.network.dto.RegistrationRequest // V2 DTO
-import com.signagepro.app.core.network.dto.RegistrationResponse // V2 DTO
+import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
+import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
 import com.signagepro.app.core.network.dto.HeartbeatRequest // Serializable DTO from its own file
 import com.signagepro.app.core.network.dto.HeartbeatResponse // Serializable DTO from its own file
 import com.signagepro.app.core.network.dto.HeartbeatMetrics // Serializable DTO from HeartbeatRequest.kt
@@ -45,27 +45,28 @@ class SignageSaasClient @Inject constructor(
             }
     }
 
-    suspend fun registerDevice(device: DeviceRegistration, tenantId: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun registerDevice(device: com.signagepro.app.core.model.DeviceRegistration, tenantId: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val request = RegistrationRequest( // V2 DTO
-                hardwareId = device.deviceId, // Corrected: Use hardwareId, maps to hardware_id in DTO
+            val request = DeviceRegistrationRequest(
+                deviceId = device.deviceId,
                 deviceName = device.deviceName,
                 appVersion = device.appVersion,
                 tenantId = tenantId,
-                deviceType = "android_player" // Explicitly set or get from device model if available
-                // Removed deviceInfo block as it's not part of RegistrationRequest DTO
+                hardwareId = device.deviceId,
+                deviceType = "android_player",
+                deviceInfo = device.deviceInfo
             )
-            val response = apiService.registerDevice(request) // apiService.registerDevice now expects V2 RegistrationRequest
+            val response = apiService.registerDevice(request)
             if (response.isSuccessful && response.body() != null) {
                 val registrationResponse = response.body()!!
-                if (!registrationResponse.registrationToken.isNullOrBlank()) {
-                    prefs.saveAuthToken(registrationResponse.registrationToken!!)
-                    prefs.saveDeviceId(registrationResponse.deviceId ?: device.deviceId) // Use deviceId from response if available
+                if (registrationResponse.success && registrationResponse.data != null) {
+                    val registrationData = registrationResponse.data
+                    prefs.saveAuthToken(registrationData.registrationToken)
+                    prefs.saveDeviceId(registrationData.deviceId)
                     prefs.setDeviceRegistered(true)
-                    // Optionally save playerId and layoutId from registrationResponse.settings if needed by SharedPreferencesManager
-                    registrationResponse.settings?.playerId?.let { prefs.savePlayerId(it.toString()) } // Assuming SharedPreferencesManager has savePlayerId
-                    registrationResponse.settings?.layoutId?.let { prefs.saveLayoutId(it.toString()) } // Assuming SharedPreferencesManager has saveLayoutId
-                    Result.Success(registrationResponse.registrationToken!!)
+                    registrationData.playerInfo?.playerId?.let { prefs.savePlayerId(it) }
+                    registrationData.playerInfo?.layoutId?.let { prefs.saveLayoutId(it) }
+                    Result.Success(registrationData.registrationToken)
                 } else {
                     Result.Error(Exception(registrationResponse.message ?: "No registration token returned"))
                 }

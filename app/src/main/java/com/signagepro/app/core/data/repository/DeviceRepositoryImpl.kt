@@ -43,12 +43,12 @@ class DeviceRepositoryImpl @Inject constructor(
         // DeviceRegistrationResponse is imported from com.signagepro.app.core.network.dto
         // TODO: Implement actual logic to call backend API
         // For now, returning a dummy success response using the DTO structure
-        val playerInfo = PlayerInfo(
+        val playerInfo = com.signagepro.app.core.network.dto.PlayerInfo(
             playerId = "1",
             layoutId = "1"
         )
         
-        val registrationData = RegistrationData(
+        val registrationData = com.signagepro.app.core.network.dto.RegistrationData(
             deviceId = request.deviceId,
             registrationToken = "dummy-device-token-12345",
             playerInfo = playerInfo
