@@ -14,6 +14,7 @@ import com.signagepro.app.core.data.model.HeartbeatResponse
 import com.signagepro.app.core.network.ApiService
 import com.signagepro.app.core.network.dto.DeviceRegistrationRequest
 import com.signagepro.app.core.network.dto.DeviceRegistrationResponse
+import com.signagepro.app.core.data.repository.AppPreferencesRepository
 import com.signagepro.app.core.utils.CoroutineDispatchers
 import com.signagepro.app.core.utils.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -178,17 +179,11 @@ class DeviceRepositoryImpl @Inject constructor(
 
             // Fully qualify the V2 DTO to avoid ambiguity
             val requestDto = com.signagepro.app.core.network.dto.RegistrationRequest(
-                deviceId = currentDeviceId,
+                tenantId = sharedPreferencesManager.getTenantId() ?: "",
+                hardwareId = currentDeviceId,
                 deviceName = deviceName,
-                appVersion = appVersion,
-                tenantId = sharedPreferencesManager.getTenantId() ?: "", // Assuming tenantId is needed and stored
-                deviceInfo = com.signagepro.app.core.network.dto.RegistrationRequest.DeviceInfo(
-                    model = Build.MODEL,
-                    manufacturer = Build.MANUFACTURER,
-                    osVersion = Build.VERSION.RELEASE,
-                    sdkVersion = Build.VERSION.SDK_INT.toString(),
-                    screenResolution = "1920x1080" // TODO: Get actual screen resolution
-                )
+                deviceType = "android_player",
+                appVersion = appVersion
             )
 
             val retrofitResponse = apiService.registerDevice(requestDto)
@@ -208,18 +203,17 @@ class DeviceRepositoryImpl @Inject constructor(
                         currentLayoutId = null,
                         registrationToken = null,
                         lastHeartbeatTimestamp = null,
-                        lastSuccessfulSyncTimestamp = null
+                        isRegistered = false,
+                        layoutId = 1L
                     )
 
                     val updatedSettings = currentSettings.copy(
-                            registrationToken = registrationData.registrationToken,
-                            isRegistered = true,
-                            // Set default values since RegistrationResponse doesn't have these fields
-                            playerId = null,
-                            currentLayoutId = null,
-                            // Ensure deviceId from response is used
-                            deviceId = registrationData.deviceId 
-                        )
+                        deviceId = registrationData.deviceId,
+                        registrationToken = registrationData.registrationToken,
+                        isRegistered = true,
+                        playerId = null,
+                        layoutId = null
+                    )
                     deviceSettingsDao.saveDeviceSettings(updatedSettings)
 
                     sharedPreferencesManager.setDeviceRegistered(true)
