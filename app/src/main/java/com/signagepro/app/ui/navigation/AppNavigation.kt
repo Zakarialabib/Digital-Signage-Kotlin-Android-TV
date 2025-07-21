@@ -26,8 +26,12 @@ import com.signagepro.app.features.settings.ui.SettingsScreen
 import com.signagepro.app.features.settings.viewmodel.SettingsViewModel
 import com.signagepro.app.features.debug.ui.DebugScreen
 import com.signagepro.app.features.debug.viewmodel.DebugViewModel
+import com.signagepro.app.features.content.ui.ContentListScreen
+import com.signagepro.app.features.content.viewmodel.ContentListViewModel
 import com.signagepro.app.features.content.ui.ContentManagementScreen
 import com.signagepro.app.features.content.viewmodel.ContentManagementViewModel
+import com.signagepro.app.features.sync.ui.SyncScreen
+import com.signagepro.app.features.sync.viewmodel.SyncViewModel
 import com.signagepro.app.features.layout.ui.LayoutEditorScreen
 import com.signagepro.app.features.layout.viewmodel.LayoutEditorViewModel
 import com.signagepro.app.features.device.ui.DeviceInfoScreen
@@ -172,6 +176,17 @@ fun AppNavigation(
             NetworkSettingsScreen(viewModel = networkSettingsViewModel)
         }
 
+        composable(Screen.ContentList.route) {
+            val contentListViewModel: ContentListViewModel = hiltViewModel()
+            ContentListScreen(
+                viewModel = contentListViewModel,
+                onContentSelected = { contentId ->
+                    // For now, we'll navigate back. Later we can implement content preview/details
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Screen.Demo.route) { // Added DemoScreen composable
             DemoScreen()
         }
@@ -187,6 +202,32 @@ fun AppNavigation(
                     navController.navigate(Screen.Demo.route) {
                         popUpTo(Screen.InitialChoice.route) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        composable(
+            route = Screen.Sync.route,
+            arguments = listOf(
+                navArgument("autostart") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val autostart = backStackEntry.arguments?.getBoolean("autostart") ?: false
+            val syncViewModel: SyncViewModel = hiltViewModel()
+            
+            LaunchedEffect(autostart) {
+                if (autostart) {
+                    syncViewModel.startSync()
+                }
+            }
+            
+            SyncScreen(
+                viewModel = syncViewModel,
+                onSyncComplete = {
+                    navController.popBackStack()
                 }
             )
         }

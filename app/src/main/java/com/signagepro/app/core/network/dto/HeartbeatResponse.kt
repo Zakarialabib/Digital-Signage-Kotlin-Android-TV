@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class HeartbeatResponse(
+data class HeartbeatResponseV2(
     @SerialName("success")
     val success: Boolean,
     @SerialName("message")

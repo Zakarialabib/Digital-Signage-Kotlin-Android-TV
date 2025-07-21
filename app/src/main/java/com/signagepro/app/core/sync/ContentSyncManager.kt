@@ -16,61 +16,57 @@ import javax.inject.Singleton
 
 @Singleton
 class ContentSyncManager @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val apiService: ApiService,
     private val secureStorage: SecureStorage,
-    private val diagnosticLogger: DiagnosticLogger
+    private val contentDownloader: ContentDownloader,
+    private val logger: Logger
 ) {
-    private val syncScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val contentDir = File(context.filesDir, "content")
-    private var currentSyncJob: Job? = null
-    
-    // Progress tracking
-    private val _currentItem = MutableStateFlow<String?>(null)
-    val currentItem: StateFlow<String?> = _currentItem
-    
-    private val _progress = MutableStateFlow(0f)
-    val progress: StateFlow<Float> = _progress
-    
-    private val _totalItems = MutableStateFlow(0)
-    val totalItems: StateFlow<Int> = _totalItems
-    
-    private val _processedItems = MutableStateFlow(0)
-    val processedItems: StateFlow<Int> = _processedItems
-    
-    private val _syncResult = MutableStateFlow<com.signagepro.app.core.sync.ContentSyncResult?>(null)
-    val syncResult: StateFlow<com.signagepro.app.core.sync.ContentSyncResult?> = _syncResult
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var currentJob: Job? = null
+
+    private val _contentState = MutableStateFlow<ContentState>(ContentState.Idle)
+    val contentState: StateFlow<ContentState> = _contentState.asStateFlow()
+
+    private var lastSyncTimestamp: Long? = null
 
     init {
         contentDir.mkdirs()
     }
 
-    suspend fun syncContent(force: Boolean = false, maxBandwidth: Long = 5 * 1024 * 1024) = withContext(Dispatchers.IO) {
-        if (currentSyncJob?.isActive == true && !force) {
-            diagnosticLogger.log(
-                LogLevel.WARNING,
-                "ContentSync",
-                "Sync already in progress, skipping"
-            )
+    suspend fun syncContent(force: Boolean = false) = withContext(Dispatchers.IO) {
+        if (currentJob?.isActive == true && !force) {
+            logger.w("Content sync already in progress")
             return@withContext
         }
 
-        // Reset progress
-        _currentItem.value = null
-        _progress.value = 0f
-        _totalItems.value = 0
-        _processedItems.value = 0
-        _syncResult.value = null
+        if (!force && !shouldSync()) {
+            logger.d("Skipping sync - too soon since last sync")
+            return@withContext
+        }
 
-        currentSyncJob = syncScope.launch {
+        _contentState.value = ContentState.Syncing(
+            currentItem = null,
+            progress = 0f,
+            totalItems = 0,
+            processedItems = 0
+        )
+
+        currentJob = scope.launch {
             val startTime = System.currentTimeMillis()
             try {
                 val deviceId = secureStorage.getDeviceId()
                     ?: throw IllegalStateException("Device not registered")
 
-                // Get content manifest from server
+                // Fetch manifest
                 val manifest = apiService.getContentManifest(deviceId)
-                _totalItems.value = manifest.contents.size
+                val contentItems = manifest.contents
+                
+                _contentState.value = ContentState.Syncing(
+                    currentItem = null,
+                    progress = 0f,
+                    totalItems = contentItems.size,
+                    processedItems = 0
+                )
                 
                 // Calculate required storage
                 val requiredStorage = manifest.contents.sumOf { it.size }

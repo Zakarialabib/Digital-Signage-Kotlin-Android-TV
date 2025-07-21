@@ -19,8 +19,7 @@ data class AuthResponse(
 )
 
 // --- HEARTBEAT --- //
-// Specific HeartbeatRequest for simpler scenarios if needed
-data class HeartbeatRequest(
+data class HeartbeatRequestV2(
     @SerializedName("device_id") val deviceId: String,
     @SerializedName("status") val status: String,
     @SerializedName("timestamp") val timestamp: Long
